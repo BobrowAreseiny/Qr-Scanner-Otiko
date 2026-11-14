@@ -13,7 +13,8 @@ public sealed class ShipmentViewModel : ObservableObject
     {
         _navigation = navigation;
 
-        OpenOrderCommand = new AsyncRelayCommand(() => OpenSectionAsync("Новый заказ"));
+        OpenOrderCommand = new AsyncRelayCommand(
+            () => _navigation.GoToAsync(nameof(OrderPage)));
         OpenInfoCommand = new AsyncRelayCommand(() => OpenSectionAsync("Информация"));
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
     }
