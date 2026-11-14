@@ -36,7 +36,7 @@ public partial class ShipmentPage : ContentPage
                 _viewModel.OpenOrderCommand.Execute(null);
                 break;
             case 2:
-                _viewModel.OpenInfoCommand.Execute(null);
+                _viewModel.OpenHistoryCommand.Execute(null);
                 break;
             case 0:
                 _viewModel.BackCommand.Execute(null);

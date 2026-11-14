@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:QRScanner.App.Controls"
+             x:Class="QRScanner.App.Views.OrderHistoryDetailPage"
+             x:Name="Root"
+             Title="Заказ"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="40,3,*,Auto"
+          BackgroundColor="{StaticResource Background}">
+
+        <controls:AppToolbar Grid.Row="0"
+                             Title="{Binding Title}"
+                             ShowBack="True"
+                             BackCommand="{Binding BackCommand}" />
+
+        <BoxView Grid.Row="1"
+                 Style="{StaticResource ThinDivider}" />
+
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16,16,16,24"
+                                 Spacing="14">
+
+                <Border Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="4">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Дата"
+                                   Style="{StaticResource SettingLabel}" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding DateText}"
+                                   Style="{StaticResource SettingValueLabel}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Марок"
+                                   Style="{StaticResource SettingLabel}" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding CountText}"
+                                   Style="{StaticResource SettingValueLabel}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Статус"
+                                   Style="{StaticResource SettingLabel}" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding StatusText}"
+                                   Style="{StaticResource SettingValueLabel}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label Text="{Binding StatusMessage}"
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="Марки"
+                       Style="{StaticResource SectionHeaderLabel}"
+                       Margin="0,0,0,0" />
+
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}"
+                                     Spacing="0">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource CardStyle}">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="{Binding SourceText}"
+                                           Style="{StaticResource ListNameLabel}" />
+                                    <Label Text="{Binding Barcode}"
+                                           Style="{StaticResource ListMetaLabel}" />
+                                    <HorizontalStackLayout Spacing="10">
+                                        <Label Text="{Binding VendorCode}"
+                                               Style="{StaticResource ListMetaLabel}" />
+                                        <Label Text="{Binding Size}"
+                                               Style="{StaticResource ListMetaLabel}" />
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <VerticalStackLayout Grid.Row="3"
+                             Padding="0,4,0,12"
+                             Spacing="8"
+                             BackgroundColor="{StaticResource Background}">
+            <Button Text="1. Отправлено"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    Command="{Binding ShipCommand}" />
+
+            <Button Text="2. Вернуть на склад"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    Margin="7,0"
+                    Command="{Binding ReturnCommand}" />
+
+            <Button Text="0. Назад"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    Margin="7,0"
+                    Command="{Binding BackCommand}" />
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>

@@ -48,6 +48,12 @@ public static class MauiProgram
 		builder.Services.AddTransient<OrderViewModel>();
 		builder.Services.AddTransient<OrderPage>();
 
+		builder.Services.AddTransient<OrderHistoryViewModel>();
+		builder.Services.AddTransient<OrderHistoryPage>();
+
+		builder.Services.AddTransient<OrderHistoryDetailViewModel>();
+		builder.Services.AddTransient<OrderHistoryDetailPage>();
+
 		builder.Services.AddTransient<ShipmentViewModel>();
 		builder.Services.AddTransient<ShipmentPage>();
 

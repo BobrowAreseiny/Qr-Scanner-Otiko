@@ -235,7 +235,8 @@ public sealed partial class OrderViewModel : ObservableObject
             var order = await _database.SaveOrderAsync(new OrderEntity
             {
                 Name = Name.Trim(),
-                CreatedAtUtc = DateTime.UtcNow
+                CreatedAtUtc = DateTime.UtcNow,
+                IsShipped = true
             });
 
             foreach (var line in Lines)

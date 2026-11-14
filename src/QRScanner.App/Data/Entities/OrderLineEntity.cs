@@ -22,4 +22,9 @@ public sealed class OrderLineEntity
     public int? SourceCorobId { get; set; }
 
     public DateTime AddedAtUtc { get; set; }
+
+    [Ignore]
+    public string SourceText => SourceCorobId.HasValue
+        ? $"Короб №{SourceCorobId.Value}"
+        : "Отдельная марка";
 }

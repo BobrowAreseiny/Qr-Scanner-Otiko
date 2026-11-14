@@ -12,6 +12,8 @@ public sealed class OrderEntity
 
     public DateTime CreatedAtUtc { get; set; }
 
+    public bool IsShipped { get; set; }
+
     public bool IsExported { get; set; }
 
     public DateTime? ExportedAtUtc { get; set; }

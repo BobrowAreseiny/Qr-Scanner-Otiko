@@ -18,5 +18,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(CorobListPage), typeof(CorobListPage));
         Routing.RegisterRoute(nameof(CorobDetailPage), typeof(CorobDetailPage));
         Routing.RegisterRoute(nameof(OrderPage), typeof(OrderPage));
+        Routing.RegisterRoute(nameof(OrderHistoryPage), typeof(OrderHistoryPage));
+        Routing.RegisterRoute(nameof(OrderHistoryDetailPage), typeof(OrderHistoryDetailPage));
     }
 }
