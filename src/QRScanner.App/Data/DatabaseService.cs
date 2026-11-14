@@ -39,6 +39,10 @@ public interface IDatabaseService
 
     Task DeleteOrderAsync(int id);
 
+    Task<bool> VerifyKeyAsync(string key);
+
+    Task<bool> ApplyRecoveryKeyAsync(string key);
+
     Task<CorobEntity> SaveCorobAsync(CorobEntity corob);
 
     Task<BoxBarcodeEntity> SaveBarcodeAsync(BoxBarcodeEntity barcode);
@@ -275,6 +279,74 @@ public sealed class DatabaseService : IDatabaseService
         var connection = await GetConnectionAsync();
         await connection.ExecuteAsync("DELETE FROM OrderLine WHERE OrderId = ?", id);
         await connection.DeleteAsync<OrderEntity>(id);
+    }
+
+    public async Task<bool> VerifyKeyAsync(string key)
+    {
+        if (!IsValidKey(key))
+        {
+            return false;
+        }
+
+        if (!File.Exists(DatabasePath))
+        {
+            return true;
+        }
+
+        try
+        {
+            var connectionString = new SQLiteConnectionString(
+                DatabasePath,
+                storeDateTimeAsTicks: true,
+                key: key.Trim(),
+                openFlags: SQLiteOpenFlags.ReadOnly);
+
+            var probe = new SQLiteAsyncConnection(connectionString);
+            await probe.ExecuteScalarAsync<int>("SELECT count(*) FROM sqlite_master;");
+            await probe.CloseAsync();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> ApplyRecoveryKeyAsync(string key)
+    {
+        if (!await VerifyKeyAsync(key))
+        {
+            return false;
+        }
+
+        await _keyProvider.SetKeyAsync(key.Trim());
+        await ReinitializeAsync();
+        return true;
+    }
+
+    private async Task ReinitializeAsync()
+    {
+        if (_connection is not null)
+        {
+            await _connection.CloseAsync();
+        }
+
+        _connection = null;
+        _initialized = false;
+        await InitializeAsync();
+    }
+
+    private static bool IsValidKey(string key)
+    {
+        try
+        {
+            var bytes = Convert.FromBase64String(key.Trim());
+            return bytes.Length == 32;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<CorobEntity> SaveCorobAsync(CorobEntity corob)
