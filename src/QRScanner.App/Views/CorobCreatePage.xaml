@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:QRScanner.App.Controls"
+             x:Class="QRScanner.App.Views.CorobCreatePage"
+             Title="Создать короб"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="40,3,*"
+          BackgroundColor="{StaticResource Background}">
+
+        <controls:AppToolbar Grid.Row="0"
+                             Title="Создать короб"
+                             ShowBack="True"
+                             BackCommand="{Binding BackCommand}" />
+
+        <BoxView Grid.Row="1"
+                 Style="{StaticResource ThinDivider}" />
+
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16,16,16,24" Spacing="14">
+
+                <Label Text="Название короба"
+                       Style="{StaticResource SectionHeaderLabel}"
+                       Margin="0,0,0,0" />
+
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource Border}"
+                        StrokeThickness="1"
+                        StrokeShape="Rectangle"
+                        Padding="8,0">
+                    <Entry Text="{Binding Name, Mode=TwoWay}"
+                           Placeholder="Например, №1" />
+                </Border>
+
+                <Label Text="Ёмкость"
+                       Style="{StaticResource SectionHeaderLabel}"
+                       Margin="0,8,0,0" />
+
+                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
+                    <Button Grid.Column="0"
+                            Text="12"
+                            Style="{StaticResource CapacityButtonStyle}"
+                            BackgroundColor="{Binding Capacity12Background}"
+                            TextColor="{Binding Capacity12TextColor}"
+                            Command="{Binding SelectCapacityCommand}"
+                            CommandParameter="12" />
+                    <Button Grid.Column="1"
+                            Text="10"
+                            Style="{StaticResource CapacityButtonStyle}"
+                            BackgroundColor="{Binding Capacity10Background}"
+                            TextColor="{Binding Capacity10TextColor}"
+                            Command="{Binding SelectCapacityCommand}"
+                            CommandParameter="10" />
+                    <Button Grid.Column="2"
+                            Text="5"
+                            Style="{StaticResource CapacityButtonStyle}"
+                            BackgroundColor="{Binding Capacity5Background}"
+                            TextColor="{Binding Capacity5TextColor}"
+                            Command="{Binding SelectCapacityCommand}"
+                            CommandParameter="5" />
+                    <Button Grid.Column="3"
+                            Text="3"
+                            Style="{StaticResource CapacityButtonStyle}"
+                            BackgroundColor="{Binding Capacity3Background}"
+                            TextColor="{Binding Capacity3TextColor}"
+                            Command="{Binding SelectCapacityCommand}"
+                            CommandParameter="3" />
+                </Grid>
+
+                <Label Text="{Binding Capacity, StringFormat='Выбрано: {0} марок'}"
+                       Style="{StaticResource BodyLabel}" />
+
+                <Button Text="Создать"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,16,0,0"
+                        Command="{Binding CreateCommand}" />
+
+                <Button Text="0. Назад"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,8,0,0"
+                        Command="{Binding BackCommand}" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+
+</ContentPage>

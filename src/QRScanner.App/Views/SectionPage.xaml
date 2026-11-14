@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:QRScanner.App.Controls"
+             x:Class="QRScanner.App.Views.SectionPage"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="40,3,*"
+          BackgroundColor="{StaticResource Background}">
+
+        <controls:AppToolbar Grid.Row="0"
+                             Title="{Binding SectionTitle}"
+                             ShowBack="True"
+                             BackCommand="{Binding BackCommand}" />
+
+        <BoxView Grid.Row="1"
+                 Style="{StaticResource ThinDivider}" />
+
+        <VerticalStackLayout Grid.Row="2"
+                             Padding="24,24,24,24"
+                             Spacing="8">
+            <Label Text="Раздел будет добавлен на следующем шаге."
+                   Style="{StaticResource BodyLabel}" />
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:QRScanner.App.Controls"
+             x:Class="QRScanner.App.Views.CorobListPage"
+             Title="Короба"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="40,3,*,Auto"
+          BackgroundColor="{StaticResource Background}">
+
+        <controls:AppToolbar Grid.Row="0"
+                             Title="Короба"
+                             ShowBack="True"
+                             BackCommand="{Binding BackCommand}" />
+
+        <BoxView Grid.Row="1"
+                 Style="{StaticResource ThinDivider}" />
+
+        <Grid Grid.Row="2">
+            <CollectionView x:Name="corobs"
+                            ItemsSource="{Binding Corobs}"
+                            SelectionMode="None"
+                            VerticalScrollBarVisibility="Never"
+                            Margin="8,12,8,8">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CardStyle}">
+                            <Grid ColumnDefinitions="*,Auto,Auto"
+                                  ColumnSpacing="8">
+
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="{Binding Name}"
+                                           Style="{StaticResource ListNameLabel}" />
+                                    <HorizontalStackLayout Spacing="10">
+                                        <Label Text="{Binding CountText}"
+                                               Style="{StaticResource ListMetaLabel}" />
+                                        <Label Text="{Binding StatusText}"
+                                               Style="{StaticResource ListMetaLabel}" />
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+
+                                <Button Grid.Column="1"
+                                        Text="Открыть"
+                                        Style="{StaticResource SmallPrimaryButtonStyle}"
+                                        Command="{Binding Path=BindingContext.OpenCommand, Source={x:Reference corobs}}"
+                                        CommandParameter="{Binding}" />
+
+                                <Button Grid.Column="2"
+                                        Text="✕"
+                                        WidthRequest="36"
+                                        Style="{StaticResource SmallDangerButtonStyle}"
+                                        Command="{Binding Path=BindingContext.DeleteCommand, Source={x:Reference corobs}}"
+                                        CommandParameter="{Binding}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Label Text="Пока нет коробов"
+                   Style="{StaticResource BodyLabel}"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   IsVisible="{Binding IsEmpty}" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               Color="{StaticResource Primary}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+        </Grid>
+
+        <VerticalStackLayout Grid.Row="3"
+                             Padding="0,4,0,12"
+                             Spacing="8"
+                             BackgroundColor="{StaticResource Background}">
+            <Button Text="1. Создать короб"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    Command="{Binding CreateCommand}" />
+            <Button Text="0. Назад"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    Margin="7,0"
+                    Command="{Binding BackCommand}" />
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>

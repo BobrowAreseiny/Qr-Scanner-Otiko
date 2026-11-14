@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:QRScanner.App.Controls"
+             x:Class="QRScanner.App.Views.SettingsPage"
+             Title="Настройки"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="40,*"
+          BackgroundColor="{StaticResource Background}">
+
+        <controls:AppToolbar Grid.Row="0"
+                             Title="Настройки"
+                             ShowBack="True"
+                             BackCommand="{Binding BackCommand}" />
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="16,0,16,32" Spacing="0">
+
+                <Label Text="ПОДКЛЮЧЕНИЕ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+
+                <Label Text="Сервер" Style="{StaticResource SettingLabel}" Margin="0,0,0,4" />
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource Border}"
+                        StrokeThickness="1"
+                        StrokeShape="Rectangle"
+                        Padding="8,0"
+                        Margin="0,0,0,10">
+                    <Entry Text="{Binding Server, Mode=TwoWay}"
+                           Placeholder="https://api.datamark.by/" />
+                </Border>
+
+                <Label Text="Логин" Style="{StaticResource SettingLabel}" Margin="0,0,0,4" />
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource Border}"
+                        StrokeThickness="1"
+                        StrokeShape="Rectangle"
+                        Padding="8,0"
+                        Margin="0,0,0,10">
+                    <Entry Text="{Binding Login, Mode=TwoWay}"
+                           Placeholder="Логин Datamark" />
+                </Border>
+
+                <Label Text="Пароль" Style="{StaticResource SettingLabel}" Margin="0,0,0,4" />
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource Border}"
+                        StrokeThickness="1"
+                        StrokeShape="Rectangle"
+                        Padding="8,0"
+                        Margin="0,0,0,10">
+                    <Entry Text="{Binding Password, Mode=TwoWay}"
+                           IsPassword="True"
+                           Placeholder="Пароль Datamark" />
+                </Border>
+
+                <Button Text="Проверить подключение"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,4,0,0"
+                        Command="{Binding TestCommand}" />
+
+                <Button Text="Сохранить"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,8,0,0"
+                        Command="{Binding SaveCommand}" />
+
+                <Label Text="{Binding StatusMessage}"
+                       Style="{StaticResource BodyLabel}"
+                       Margin="0,10,0,0" />
+
+                <Label Text="БЕЗОПАСНОСТЬ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+
+                <Grid ColumnDefinitions="*,Auto" Padding="0,14">
+                    <Label Text="Шифрование БД" Style="{StaticResource SettingLabel}" />
+                    <Label Grid.Column="1"
+                           Text="SQLCipher"
+                           Style="{StaticResource SettingValueLabel}" />
+                </Grid>
+
+                <BoxView Style="{StaticResource SettingRowSeparator}" />
+
+                <Grid ColumnDefinitions="*,Auto" Padding="0,14">
+                    <Label Text="Ключ восстановления" Style="{StaticResource SettingLabel}" />
+                    <Label Grid.Column="1"
+                           Text="шаг 5"
+                           Style="{StaticResource SettingValueLabel}" />
+                </Grid>
+
+                <BoxView Style="{StaticResource SettingRowSeparator}" />
+
+                <Label Text="О ПРОГРАММЕ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+
+                <Grid ColumnDefinitions="*,Auto" Padding="0,14">
+                    <Label Text="Версия" Style="{StaticResource SettingLabel}" />
+                    <Label Grid.Column="1"
+                           Text="1.0"
+                           Style="{StaticResource SettingValueLabel}" />
+                </Grid>
+
+                <BoxView Style="{StaticResource SettingRowSeparator}" />
+
+                <Grid ColumnDefinitions="*,Auto" Padding="0,14">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ShowAboutCommand}" />
+                    </Grid.GestureRecognizers>
+                    <Label Text="О программе" Style="{StaticResource SettingLabel}" />
+                    <Label Grid.Column="1"
+                           Text="›"
+                           Style="{StaticResource SettingValueLabel}"
+                           FontSize="22" />
+                </Grid>
+
+                <BoxView Style="{StaticResource SettingRowSeparator}" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+
+</ContentPage>
