@@ -68,7 +68,7 @@ public partial class CorobDetailPage : ContentPage, IQueryAttributable
                 _viewModel.SaveCommand.Execute(null);
                 break;
             case 2:
-                _viewModel.ShareQrCommand.Execute(null);
+                _viewModel.QrMenuCommand.Execute(null);
                 break;
             case 0:
                 _viewModel.BackCommand.Execute(null);

@@ -17,6 +17,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
     private readonly IApiSettingsService _apiSettings;
     private readonly IDatamarkApiClient _apiClient;
     private readonly IQrCodeService _qrCodeService;
+    private readonly IFileSaveService _fileSaveService;
 
     public CorobDetailViewModel(
         IDatabaseService database,
@@ -24,7 +25,8 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         IDialogService dialogs,
         IApiSettingsService apiSettings,
         IDatamarkApiClient apiClient,
-        IQrCodeService qrCodeService)
+        IQrCodeService qrCodeService,
+        IFileSaveService fileSaveService)
     {
         _database = database;
         _navigation = navigation;
@@ -32,11 +34,14 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         _apiSettings = apiSettings;
         _apiClient = apiClient;
         _qrCodeService = qrCodeService;
+        _fileSaveService = fileSaveService;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
         DeleteBarcodeCommand = new AsyncRelayCommand<BoxBarcodeEntity>(DeleteBarcodeAsync);
         ShareQrCommand = new AsyncRelayCommand(ShareQrAsync);
+        SaveQrToFileCommand = new AsyncRelayCommand(SaveQrToFileAsync);
+        QrMenuCommand = new AsyncRelayCommand(ShowQrMenuAsync);
     }
 
     public ObservableCollection<BoxBarcodeEntity> Barcodes { get; } = new();
@@ -48,6 +53,10 @@ public sealed partial class CorobDetailViewModel : ObservableObject
     public IAsyncRelayCommand<BoxBarcodeEntity> DeleteBarcodeCommand { get; }
 
     public IAsyncRelayCommand ShareQrCommand { get; }
+
+    public IAsyncRelayCommand SaveQrToFileCommand { get; }
+
+    public IAsyncRelayCommand QrMenuCommand { get; }
 
     [ObservableProperty]
     private CorobEntity? corob;
@@ -221,6 +230,66 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             StatusMessage = $"Ошибка QR: {ex.Message}";
             await _dialogs.ShowAlertAsync("QR-код", StatusMessage);
         }
+    }
+
+    private async Task ShowQrMenuAsync()
+    {
+        if (Corob is null)
+        {
+            return;
+        }
+
+        var choice = await _dialogs.ShowActionSheetAsync(
+            "QR-код короба",
+            "Отмена",
+            "Сохранить в файл",
+            "Поделиться");
+
+        switch (choice)
+        {
+            case "Сохранить в файл":
+                await SaveQrToFileAsync();
+                break;
+            case "Поделиться":
+                await ShareQrAsync();
+                break;
+        }
+    }
+
+    private async Task SaveQrToFileAsync()
+    {
+        if (Corob is null)
+        {
+            return;
+        }
+
+        try
+        {
+            StatusMessage = "Генерация QR-кода...";
+            var path = await _qrCodeService.GenerateAsync(Corob.Id, Corob.Name);
+
+            StatusMessage = "Выберите папку для сохранения...";
+            var saved = await _fileSaveService.SaveAsync(
+                path,
+                $"{SafeFileName(Corob.Name)}.png",
+                "image/png");
+
+            StatusMessage = saved
+                ? "Файл QR сохранён."
+                : "Сохранение отменено.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Ошибка сохранения: {ex.Message}";
+            await _dialogs.ShowAlertAsync("Сохранить в файл", StatusMessage);
+        }
+    }
+
+    private static string SafeFileName(string name)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        var safe = new string(name.Select(c => invalid.Contains(c) ? '_' : c).ToArray()).Trim();
+        return string.IsNullOrWhiteSpace(safe) ? "Короб" : safe;
     }
 
     private async Task DeleteBarcodeAsync(BoxBarcodeEntity? barcode)

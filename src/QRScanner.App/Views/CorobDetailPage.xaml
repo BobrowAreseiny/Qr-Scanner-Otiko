@@ -102,7 +102,7 @@
                     Style="{StaticResource MenuButtonStyle}"
                     HeightRequest="40"
                     Margin="7,0"
-                    Command="{Binding ShareQrCommand}" />
+                    Command="{Binding QrMenuCommand}" />
 
             <Button Text="0. Назад"
                     Style="{StaticResource MenuButtonStyle}"
