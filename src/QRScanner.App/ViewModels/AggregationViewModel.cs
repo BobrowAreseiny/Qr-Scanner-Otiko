@@ -20,7 +20,7 @@ public sealed class AggregationViewModel : ObservableObject
             () => _navigation.GoToAsync(nameof(CorobListPage)));
 
         OpenInfoCommand = new AsyncRelayCommand(
-            () => _navigation.GoToAsync($"{nameof(SectionPage)}?section={Uri.EscapeDataString("Информация")}"));
+            () => _navigation.GoToAsync(nameof(CorobInfoPage)));
 
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
     }
