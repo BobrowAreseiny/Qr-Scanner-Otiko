@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.ApplicationModel.DataTransfer;
 using QRScanner.App.Data;
 using QRScanner.App.Data.Entities;
 using QRScanner.App.Services;
@@ -15,23 +16,27 @@ public sealed partial class CorobDetailViewModel : ObservableObject
     private readonly IDialogService _dialogs;
     private readonly IApiSettingsService _apiSettings;
     private readonly IDatamarkApiClient _apiClient;
+    private readonly IQrCodeService _qrCodeService;
 
     public CorobDetailViewModel(
         IDatabaseService database,
         INavigationService navigation,
         IDialogService dialogs,
         IApiSettingsService apiSettings,
-        IDatamarkApiClient apiClient)
+        IDatamarkApiClient apiClient,
+        IQrCodeService qrCodeService)
     {
         _database = database;
         _navigation = navigation;
         _dialogs = dialogs;
         _apiSettings = apiSettings;
         _apiClient = apiClient;
+        _qrCodeService = qrCodeService;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
         DeleteBarcodeCommand = new AsyncRelayCommand<BoxBarcodeEntity>(DeleteBarcodeAsync);
+        ShareQrCommand = new AsyncRelayCommand(ShareQrAsync);
     }
 
     public ObservableCollection<BoxBarcodeEntity> Barcodes { get; } = new();
@@ -41,6 +46,8 @@ public sealed partial class CorobDetailViewModel : ObservableObject
     public IAsyncRelayCommand BackCommand { get; }
 
     public IAsyncRelayCommand<BoxBarcodeEntity> DeleteBarcodeCommand { get; }
+
+    public IAsyncRelayCommand ShareQrCommand { get; }
 
     [ObservableProperty]
     private CorobEntity? corob;
@@ -186,6 +193,33 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         catch (Exception ex)
         {
             await _dialogs.ShowAlertAsync("Ошибка", $"Не удалось сохранить короб: {ex.Message}");
+        }
+    }
+
+    private async Task ShareQrAsync()
+    {
+        if (Corob is null)
+        {
+            return;
+        }
+
+        try
+        {
+            StatusMessage = "Генерация QR-кода...";
+            var path = await _qrCodeService.GenerateAsync(Corob.Id, Corob.Name);
+
+            await Share.Default.RequestAsync(new ShareFileRequest
+            {
+                Title = $"QR-код короба {Corob.Name}",
+                File = new ShareFile(path)
+            });
+
+            StatusMessage = "QR-код готов.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Ошибка QR: {ex.Message}";
+            await _dialogs.ShowAlertAsync("QR-код", StatusMessage);
         }
     }
 
