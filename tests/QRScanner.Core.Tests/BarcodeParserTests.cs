@@ -8,7 +8,8 @@ public class BarcodeParserTests
     public void Extracts_gtin_from_marking_code()
     {
         const string code = "010460000000000121ABC";
-        Assert.Equal("4600000000001", BarcodeParser.ExtractGtin(code));
+        Assert.Equal("04600000000001", BarcodeParser.ExtractGtin(code));
+        Assert.Equal(14, BarcodeParser.ExtractGtin(code)!.Length);
     }
 
     [Fact]
