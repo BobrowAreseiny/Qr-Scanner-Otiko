@@ -11,4 +11,9 @@ public interface IDialogService
         string cancel = "Нет");
 
     Task<string?> ShowActionSheetAsync(string title, string cancel, params string[] buttons);
+
+    Task<string?> ShowPromptAsync(
+        string title,
+        string message,
+        string placeholder);
 }

@@ -82,14 +82,69 @@
 
                 <BoxView Style="{StaticResource SettingRowSeparator}" />
 
-                <Grid ColumnDefinitions="*,Auto" Padding="0,14">
-                    <Label Text="Ключ восстановления" Style="{StaticResource SettingLabel}" />
-                    <Label Grid.Column="1"
-                           Text="шаг 5"
-                           Style="{StaticResource SettingValueLabel}" />
+                <Label Text="Код восстановления"
+                       Style="{StaticResource SettingLabel}"
+                       Margin="0,14,0,8" />
+
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
+                    <Button Text="Показать"
+                            Style="{StaticResource SmallButtonStyle}"
+                            Command="{Binding ShowRecoveryCodeCommand}" />
+
+                    <Button Grid.Column="1"
+                            Text="Копировать"
+                            Style="{StaticResource SmallButtonStyle}"
+                            Command="{Binding CopyRecoveryCodeCommand}" />
+
+                    <Button Grid.Column="2"
+                            Text="В файл"
+                            Style="{StaticResource SmallButtonStyle}"
+                            Command="{Binding SaveRecoveryCodeCommand}" />
                 </Grid>
 
-                <BoxView Style="{StaticResource SettingRowSeparator}" />
+                <Label Text="{Binding RecoveryCode}"
+                       IsVisible="{Binding IsRecoveryCodeVisible}"
+                       FontSize="12"
+                       TextColor="{StaticResource TextPrimary}"
+                       LineBreakMode="CharacterWrap"
+                       Margin="0,8,0,0" />
+
+                <Label Text="{Binding RecoveryStatusMessage}"
+                       Style="{StaticResource BodyLabel}"
+                       Margin="0,6,0,0" />
+
+                <BoxView Style="{StaticResource SettingRowSeparator}" Margin="0,14,0,0" />
+
+                <Label Text="Резервные копии"
+                       Style="{StaticResource SettingLabel}"
+                       Margin="0,14,0,4" />
+
+                <Label Text="{Binding LastBackupText}"
+                       Style="{StaticResource BodyLabel}" />
+
+                <Button Text="Создать копию БД"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,8,0,0"
+                        Command="{Binding CreateBackupCommand}" />
+
+                <Button Text="Сохранить копию в файл"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,8,0,0"
+                        Command="{Binding SaveBackupCommand}" />
+
+                <Button Text="Восстановить из файла"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,8,0,0"
+                        Command="{Binding RestoreBackupCommand}" />
+
+                <Label Text="{Binding BackupStatusMessage}"
+                       Style="{StaticResource BodyLabel}"
+                       Margin="0,6,0,0" />
+
+                <BoxView Style="{StaticResource SettingRowSeparator}" Margin="0,14,0,0" />
 
                 <Label Text="О ПРОГРАММЕ"
                        Style="{StaticResource SectionHeaderLabel}" />
