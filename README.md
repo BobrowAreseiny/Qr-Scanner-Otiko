@@ -97,7 +97,7 @@ tests/QRScanner.Core.Tests/
 Готово в отдельных ветках, но ещё не слито в `main`:
 
 - отгрузка и экспорт `.txt` — `feature/shipment-order-export`;
-- QR-код короба и «Поделиться» — `feature/qr-share`;
+- QR-код короба, «Поделиться» и сохранение в файл — `feature/qr-share`;
 - восстановление ключа БД — `feature/db-recovery` (в работе).
 
 Не реализовано:
