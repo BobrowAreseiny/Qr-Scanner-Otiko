@@ -59,7 +59,7 @@ tests/QRScanner.Core.Tests/
 - Сканер: broadcast `com.xcheng.scanner.action.BARCODE_DECODING_BROADCAST`.
 - Datamark: `/auth`, `/items/findItems`.
 - QR: генерация PNG, системное «Поделиться», сохранение через SAF.
-- Заказы: сохранение в БД, экспорт `.txt`.
+- Заказы: сохранение в БД, экспорт `.txt`, HTTP-обмен с 1С.
 
 ## Ключевые файлы
 
@@ -67,10 +67,13 @@ tests/QRScanner.Core.Tests/
 - `Data/SecureStorageDbKeyProvider.cs` — ключ БД;
 - `Services/ScannerService.cs` — приём сканера;
 - `Services/DatamarkApiClient.cs` — Datamark;
+- `Services/OneCApiClient.cs` — HTTP-обмен с 1С;
+- `Services/SecureStorageOneCSettingsService.cs` — настройки 1С;
 - `Services/QrCodeService.cs` — QR-код короба;
 - `Services/FileSaveService.cs` — сохранение файла через системный выбор;
 - `ViewModels/CorobDetailViewModel.cs` — короб, марки, QR;
 - `ViewModels/OrderViewModel.cs` — заказ и экспорт;
+- `ViewModels/OneCSettingsViewModel.cs` — подключение к 1С;
 - `ViewModels/SettingsViewModel.cs` — настройки Datamark;
 - `Resources/Styles/Styles.xaml` — дизайн-система.
 

@@ -100,6 +100,7 @@ tests/QRScanner.Core.Tests/
 - QR-код короба, «Поделиться» и сохранение в файл — `feature/qr-share`;
 - поиск марки по коробам и удаление марки — `feature/corob-info-search`;
 - история заказов и действия «Отправлено» / «Вернуть на склад» — `feature/order-history`;
+- API-обмен заказами с 1С — `feature/1c-api`;
 - код восстановления и резервные копии БД — `feature/db-recovery`.
 
 Не реализовано:
@@ -107,7 +108,6 @@ tests/QRScanner.Core.Tests/
 - запрет добавления марки без авторизации Datamark;
 - файловые логи;
 - справка;
-- API-обмен заказами с 1С;
 - CI (GitHub Actions);
 - проверка с реальными учётными данными Datamark;
 - финальная release-подпись.
