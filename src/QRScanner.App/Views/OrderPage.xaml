@@ -50,6 +50,13 @@
                 <Label Text="{Binding StatusMessage}"
                        Style="{StaticResource BodyLabel}" />
 
+                <Button Text="Авторизоваться"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,6,0,0"
+                        IsVisible="{Binding IsAuthRequired}"
+                        Command="{Binding OpenSettingsCommand}" />
+
                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}"
                                      Spacing="0">
                     <BindableLayout.ItemTemplate>

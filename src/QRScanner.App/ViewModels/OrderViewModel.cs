@@ -39,6 +39,8 @@ public sealed partial class OrderViewModel : ObservableObject
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
         DeleteLineCommand = new AsyncRelayCommand<OrderLineEntity>(DeleteLineAsync);
+        OpenSettingsCommand = new AsyncRelayCommand(
+            () => _navigation.GoToAsync(nameof(QRScanner.App.Views.SettingsPage)));
     }
 
     public ObservableCollection<OrderLineEntity> Lines { get; } = new();
@@ -48,6 +50,11 @@ public sealed partial class OrderViewModel : ObservableObject
     public IAsyncRelayCommand BackCommand { get; }
 
     public IAsyncRelayCommand<OrderLineEntity> DeleteLineCommand { get; }
+
+    public IAsyncRelayCommand OpenSettingsCommand { get; }
+
+    [ObservableProperty]
+    private bool isAuthRequired;
 
     [ObservableProperty]
     private string name = string.Empty;
@@ -168,6 +175,16 @@ public sealed partial class OrderViewModel : ObservableObject
 
     private async Task AddMarkAsync(string code)
     {
+        var settings = await _apiSettings.LoadAsync();
+        if (!settings.HasCredentials)
+        {
+            IsAuthRequired = true;
+            StatusMessage = "Требуется авторизация Электронного знака. Укажите логин и пароль в настройках.";
+            return;
+        }
+
+        IsAuthRequired = false;
+
         if (Lines.Any(l => l.Barcode == code))
         {
             StatusMessage = "Эта марка уже есть в заказе.";
@@ -186,23 +203,19 @@ public sealed partial class OrderViewModel : ObservableObject
 
         if (!string.IsNullOrWhiteSpace(gtin))
         {
-            var settings = await _apiSettings.LoadAsync();
-            if (settings.HasCredentials)
+            StatusMessage = "Запрос информации о товаре...";
+            try
             {
-                StatusMessage = "Запрос информации о товаре...";
-                try
+                var product = await _apiClient.FindProductAsync(gtin!, settings);
+                if (product is not null)
                 {
-                    var product = await _apiClient.FindProductAsync(gtin!, settings);
-                    if (product is not null)
-                    {
-                        vendorCode = product.VendorCode;
-                        size = product.Size;
-                    }
+                    vendorCode = product.VendorCode;
+                    size = product.Size;
                 }
-                catch (Exception ex)
-                {
-                    StatusMessage = $"Datamark недоступен: {ex.Message}";
-                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Электронный знак недоступен: {ex.Message}";
             }
         }
 
