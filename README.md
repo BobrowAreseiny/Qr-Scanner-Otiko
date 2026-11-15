@@ -111,7 +111,7 @@ tests/QRScanner.Core.Tests/
 
 - запрет добавления марки без авторизации Datamark;
 - CI (GitHub Actions);
-- проверка API Электронного знака с рабочим паролем;
+- проверка API Электронного знака на реальном ТСД;
 - финальная release-подпись.
 
 Подробный план — в [docs/PROJECT-STATE.md](docs/PROJECT-STATE.md).
