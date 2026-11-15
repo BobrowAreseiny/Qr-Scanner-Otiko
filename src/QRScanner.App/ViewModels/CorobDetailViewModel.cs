@@ -115,6 +115,12 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         }
 
         var gtin = BarcodeParser.ExtractGtin(code);
+        if (!string.IsNullOrWhiteSpace(gtin) && !GtinValidator.IsValid(gtin))
+        {
+            StatusMessage = "GTIN не прошёл проверку контрольной суммы.";
+            return;
+        }
+
         string? vendorCode = null;
         string? size = null;
 

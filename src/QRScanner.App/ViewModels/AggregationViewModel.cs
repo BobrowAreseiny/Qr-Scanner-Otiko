@@ -22,6 +22,9 @@ public sealed class AggregationViewModel : ObservableObject
         OpenInfoCommand = new AsyncRelayCommand(
             () => _navigation.GoToAsync($"{nameof(SectionPage)}?section={Uri.EscapeDataString("Информация")}"));
 
+        OpenGtinCheckCommand = new AsyncRelayCommand(
+            () => _navigation.GoToAsync(nameof(GtinCheckPage)));
+
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
     }
 
@@ -30,6 +33,8 @@ public sealed class AggregationViewModel : ObservableObject
     public IAsyncRelayCommand OpenCorobsCommand { get; }
 
     public IAsyncRelayCommand OpenInfoCommand { get; }
+
+    public IAsyncRelayCommand OpenGtinCheckCommand { get; }
 
     public IAsyncRelayCommand BackCommand { get; }
 }

@@ -56,6 +56,9 @@ public static class MauiProgram
 		builder.Services.AddTransient<OrderHistoryDetailViewModel>();
 		builder.Services.AddTransient<OrderHistoryDetailPage>();
 
+		builder.Services.AddTransient<GtinCheckViewModel>();
+		builder.Services.AddTransient<GtinCheckPage>();
+
 		builder.Services.AddTransient<ShipmentViewModel>();
 		builder.Services.AddTransient<ShipmentPage>();
 

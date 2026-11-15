@@ -63,8 +63,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         Login = settings.Login;
         Password = settings.Password;
         StatusMessage = settings.HasCredentials
-            ? "Данные Datamark загружены."
-            : "Укажите логин и пароль Datamark.";
+            ? "Данные Электронного знака (Datamark) загружены."
+            : "Укажите логин и пароль Электронного знака.";
     }
 
     private async Task SaveAsync()
@@ -73,7 +73,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         try
         {
             await _apiSettings.SaveAsync(new ApiSettings(Server, Login, Password));
-            StatusMessage = "Настройки сохранены.";
+            StatusMessage = "Настройки Электронного знака сохранены.";
         }
         catch (Exception ex)
         {
@@ -96,13 +96,15 @@ public sealed partial class SettingsViewModel : ObservableObject
             await _apiSettings.SaveAsync(settings);
 
             var ok = await _apiClient.TestConnectionAsync(settings);
-            StatusMessage = ok ? "Подключение к Datamark установлено." : "Не удалось подключиться к Datamark.";
-            await _dialogs.ShowAlertAsync("Datamark", StatusMessage);
+            StatusMessage = ok
+                ? "Подключение к Электронному знаку (Datamark) установлено."
+                : "Не удалось подключиться к Электронному знаку (Datamark).";
+            await _dialogs.ShowAlertAsync("Электронный знак", StatusMessage);
         }
         catch (Exception ex)
         {
             StatusMessage = $"Ошибка подключения: {ex.Message}";
-            await _dialogs.ShowAlertAsync("Datamark", StatusMessage);
+            await _dialogs.ShowAlertAsync("Электронный знак", StatusMessage);
         }
         finally
         {

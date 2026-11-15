@@ -41,6 +41,9 @@ public partial class AggregationPage : ContentPage
             case 3:
                 _viewModel.OpenInfoCommand.Execute(null);
                 break;
+            case 4:
+                _viewModel.OpenGtinCheckCommand.Execute(null);
+                break;
             case 0:
                 _viewModel.BackCommand.Execute(null);
                 break;

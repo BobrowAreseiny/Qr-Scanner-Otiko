@@ -27,6 +27,10 @@
                         Style="{StaticResource MenuButtonStyle}"
                         Command="{Binding OpenInfoCommand}" />
 
+                <Button Text="4. Проверка GTIN"
+                        Style="{StaticResource MenuButtonStyle}"
+                        Command="{Binding OpenGtinCheckCommand}" />
+
                 <BoxView Style="{StaticResource ThinDivider}"
                          Margin="0,7,0,0" />
 

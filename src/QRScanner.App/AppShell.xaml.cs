@@ -21,5 +21,6 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(OrderPage), typeof(OrderPage));
         Routing.RegisterRoute(nameof(OrderHistoryPage), typeof(OrderHistoryPage));
         Routing.RegisterRoute(nameof(OrderHistoryDetailPage), typeof(OrderHistoryDetailPage));
+        Routing.RegisterRoute(nameof(GtinCheckPage), typeof(GtinCheckPage));
     }
 }

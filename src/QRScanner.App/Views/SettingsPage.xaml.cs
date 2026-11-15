@@ -29,6 +29,7 @@ public partial class SettingsPage : ContentPage
     protected override void OnDisappearing()
     {
         _keyboard.ShortcutPressed -= OnShortcut;
+        _viewModel.Password = string.Empty;
         HideKeyboard();
         base.OnDisappearing();
     }

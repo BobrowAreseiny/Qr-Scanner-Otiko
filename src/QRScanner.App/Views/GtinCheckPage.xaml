@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:QRScanner.App.Controls"
+             x:Class="QRScanner.App.Views.GtinCheckPage"
+             Title="Проверка GTIN"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="40,3,*,Auto"
+          BackgroundColor="{StaticResource Background}">
+
+        <controls:AppToolbar Grid.Row="0"
+                             Title="Проверка GTIN"
+                             ShowBack="True"
+                             BackCommand="{Binding BackCommand}" />
+
+        <BoxView Grid.Row="1"
+                 Style="{StaticResource ThinDivider}" />
+
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16,8,16,24" Spacing="0">
+
+                <Label Text="GTIN ИЛИ КОД МАРКИРОВКИ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource Border}"
+                        StrokeThickness="1"
+                        StrokeShape="Rectangle"
+                        Padding="8,0"
+                        Margin="0,0,0,10">
+                    <Entry Text="{Binding Gtin, Mode=TwoWay}"
+                           Placeholder="04810498044822" />
+                </Border>
+
+                <Label Text="{Binding StatusMessage}"
+                       Style="{StaticResource BodyLabel}" />
+
+                <Button Text="Настройки"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,10,0,0"
+                        IsVisible="{Binding IsAuthRequired}"
+                        Command="{Binding OpenSettingsCommand}" />
+
+                <Border Style="{StaticResource CardStyle}"
+                        IsVisible="{Binding IsResultVisible}"
+                        Margin="0,12,0,0">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="{Binding ProductName}"
+                               Style="{StaticResource ListNameLabel}" />
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Артикул"
+                                   Style="{StaticResource SettingLabel}" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding VendorCode}"
+                                   Style="{StaticResource SettingValueLabel}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Размер"
+                                   Style="{StaticResource SettingLabel}" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding Size}"
+                                   Style="{StaticResource SettingValueLabel}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="GTIN"
+                                   Style="{StaticResource SettingLabel}" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding GtinCheckText}"
+                                   Style="{StaticResource SettingValueLabel}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Группа"
+                                   Style="{StaticResource SettingLabel}" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding GroupText}"
+                                   Style="{StaticResource SettingValueLabel}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Наш товар"
+                                   Style="{StaticResource SettingLabel}" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding IsMyText}"
+                                   Style="{StaticResource SettingValueLabel}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <VerticalStackLayout Grid.Row="3"
+                             Padding="0,4,0,12"
+                             Spacing="8"
+                             BackgroundColor="{StaticResource Background}">
+            <Button Text="1. Проверить"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    Command="{Binding CheckCommand}" />
+
+            <Button Text="0. Назад"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    Margin="7,0"
+                    Command="{Binding BackCommand}" />
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>
