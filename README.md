@@ -101,12 +101,13 @@ tests/QRScanner.Core.Tests/
 - поиск марки по коробам и удаление марки — `feature/corob-info-search`;
 - история заказов и действия «Отправлено» / «Вернуть на склад» — `feature/order-history`;
 - API-обмен заказами с 1С — `feature/1c-api`;
-- код восстановления и резервные копии БД — `feature/db-recovery`.
+- код восстановления и резервные копии БД — `feature/db-recovery`;
+- файловые логи и экран «Логи» — `feature/file-logging`;
+- смена логина и пароля Честного знака — `fix/datamark-credentials`.
 
 Не реализовано:
 
 - запрет добавления марки без авторизации Datamark;
-- файловые логи;
 - справка;
 - CI (GitHub Actions);
 - проверка с реальными учётными данными Datamark;
