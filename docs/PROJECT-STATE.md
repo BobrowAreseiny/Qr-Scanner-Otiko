@@ -28,7 +28,8 @@
 | Ветка | Коммит | Состояние |
 |---|---|---|
 | `main` | актуальный | стабильная |
-| `integration/v1` | `dfbd708` | интеграционная, не слита в `main` |
+| `integration/v1` | `5847459` | интеграционная, не слита в `main` |
+| `ci/github-actions` | `5847459` | CI добавлен, влит в `integration/v1` |
 | `feature/shipment-order-export` | `7802a4a` | готова, не слита |
 | `feature/qr-share` | `6fffef9` | готова, не слита |
 | `feature/corob-info-search` | `860b973` | готова, не слита |
@@ -70,6 +71,24 @@
 - настройки содержат Datamark, 1С и резервное копирование.
 
 В `main` интеграционная ветка пока не слита.
+
+## CI
+
+Workflow `.github/workflows/android.yml`:
+
+- запускается на push и pull request в `main` и `integration/v1`;
+- ручной запуск `workflow_dispatch`;
+- Windows runner, JDK 17, .NET 10;
+- установка workload `maui-android`;
+- restore, тесты Core, сборка Release APK;
+- артефакты: `QRScanner-APK` и `test-results`.
+
+Первый запуск:
+
+- статус: **success**;
+- URL: https://github.com/BobrowAreseiny/Qr-Scanner-Otiko/actions/runs/43754349504
+- APK: 55 473 277 байт;
+- test-results: 13 812 байт.
 
 ### feature/shipment-order-export
 
@@ -242,9 +261,8 @@
 ## План работ
 
 1. Установить `integration/v1` на ТСД и проверить все сценарии.
-2. `ci/github-actions` — сборка и тесты.
-3. `feature/release-hardening` — разрешения, release-подпись.
-4. После проверки слить `integration/v1` в `main`.
+2. `feature/release-hardening` — разрешения, release-подпись.
+3. После проверки слить `integration/v1` в `main`.
 
 ## Открытые вопросы
 

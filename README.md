@@ -94,7 +94,7 @@ tests/QRScanner.Core.Tests/
 
 ## Статус
 
-Все перечисленные функции собраны в `integration/v1` (`dfbd708`), но ещё не слиты в `main`:
+Все перечисленные функции собраны в `integration/v1` (`5847459`), но ещё не слиты в `main`:
 
 - отгрузка и экспорт `.txt` — `feature/shipment-order-export`;
 - QR-код короба, «Поделиться» и сохранение в файл — `feature/qr-share`;
@@ -106,11 +106,11 @@ tests/QRScanner.Core.Tests/
 - смена логина и пароля Электронного знака — `fix/datamark-credentials`;
 - проверка GTIN и карточка товара — `feature/gtin-check`;
 - запрет добавления марки без авторизации — `fix/offline-auth`;
-- справка — `feature/help`.
+- справка — `feature/help`;
+- CI: сборка Android и тесты — `.github/workflows/android.yml`.
 
 Не реализовано:
 
-- CI (GitHub Actions);
 - проверка API Электронного знака на реальном ТСД;
 - финальная release-подпись.
 
