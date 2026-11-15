@@ -20,6 +20,7 @@ public sealed class DatamarkApiClient : IDatamarkApiClient
     private string? _token;
     private string? _tokenBaseUrl;
     private string? _tokenLogin;
+    private string? _tokenPassword;
 
     public DatamarkApiClient(ILogger<DatamarkApiClient> logger)
     {
@@ -128,7 +129,8 @@ public sealed class DatamarkApiClient : IDatamarkApiClient
     {
         if (!string.IsNullOrWhiteSpace(_token) &&
             string.Equals(_tokenBaseUrl, settings.BaseUrl, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(_tokenLogin, settings.Login, StringComparison.Ordinal))
+            string.Equals(_tokenLogin, settings.Login, StringComparison.Ordinal) &&
+            string.Equals(_tokenPassword, settings.Password, StringComparison.Ordinal))
         {
             return _token;
         }
@@ -144,14 +146,15 @@ public sealed class DatamarkApiClient : IDatamarkApiClient
         if (!force &&
             !string.IsNullOrWhiteSpace(_token) &&
             string.Equals(_tokenBaseUrl, settings.BaseUrl, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(_tokenLogin, settings.Login, StringComparison.Ordinal))
+            string.Equals(_tokenLogin, settings.Login, StringComparison.Ordinal) &&
+            string.Equals(_tokenPassword, settings.Password, StringComparison.Ordinal))
         {
             return _token;
         }
 
         if (!settings.HasCredentials)
         {
-            throw new InvalidOperationException("Не заданы логин и пароль Datamark.");
+            throw new InvalidOperationException("Не заданы логин и пароль Честного знака.");
         }
 
         var uri = BuildUri(settings.BaseUrl, "auth");
@@ -176,6 +179,7 @@ public sealed class DatamarkApiClient : IDatamarkApiClient
         _token = result.token;
         _tokenBaseUrl = settings.BaseUrl;
         _tokenLogin = settings.Login;
+        _tokenPassword = settings.Password;
         return _token;
     }
 
