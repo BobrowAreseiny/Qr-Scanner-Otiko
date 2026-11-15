@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using QRScanner.App.Data;
 using QRScanner.App.Data.Entities;
 using QRScanner.App.Services;
+using QRScanner.App.Services.Datamark;
 using QRScanner.Core.Barcodes;
 
 namespace QRScanner.App.ViewModels;
@@ -32,6 +33,8 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
         DeleteBarcodeCommand = new AsyncRelayCommand<BoxBarcodeEntity>(DeleteBarcodeAsync);
+        OpenSettingsCommand = new AsyncRelayCommand(
+            () => _navigation.GoToAsync(nameof(QRScanner.App.Views.SettingsPage)));
     }
 
     public ObservableCollection<BoxBarcodeEntity> Barcodes { get; } = new();
@@ -42,8 +45,13 @@ public sealed partial class CorobDetailViewModel : ObservableObject
 
     public IAsyncRelayCommand<BoxBarcodeEntity> DeleteBarcodeCommand { get; }
 
+    public IAsyncRelayCommand OpenSettingsCommand { get; }
+
     [ObservableProperty]
     private CorobEntity? corob;
+
+    [ObservableProperty]
+    private bool isAuthRequired;
 
     [ObservableProperty]
     private string title = "Короб";
@@ -75,6 +83,13 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         }
 
         UpdateCount();
+
+        var settings = await _apiSettings.LoadAsync();
+        IsAuthRequired = !settings.HasCredentials;
+        if (IsAuthRequired)
+        {
+            StatusMessage = "Требуется авторизация Электронного знака. Отсканируйте марку после входа.";
+        }
     }
 
     public async Task HandleBarcodeAsync(BarcodeScannedEventArgs args)
@@ -95,6 +110,16 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             StatusMessage = "Это код короба, а не марка товара.";
             return;
         }
+
+        var settings = await _apiSettings.LoadAsync();
+        if (!settings.HasCredentials)
+        {
+            IsAuthRequired = true;
+            StatusMessage = "Требуется авторизация Электронного знака. Укажите логин и пароль в настройках.";
+            return;
+        }
+
+        IsAuthRequired = false;
 
         if (Barcodes.Any(b => b.Barcode == code))
         {
@@ -126,23 +151,25 @@ public sealed partial class CorobDetailViewModel : ObservableObject
 
         if (!string.IsNullOrWhiteSpace(gtin))
         {
-            var settings = await _apiSettings.LoadAsync();
-            if (settings.HasCredentials)
+            StatusMessage = "Запрос информации о товаре...";
+            try
             {
-                StatusMessage = "Запрос информации о товаре...";
-                try
+                var product = await _apiClient.FindProductAsync(gtin!, settings);
+                if (product is not null)
                 {
-                    var product = await _apiClient.FindProductAsync(gtin!, settings);
-                    if (product is not null)
-                    {
-                        vendorCode = product.VendorCode;
-                        size = product.Size;
-                    }
+                    vendorCode = product.VendorCode;
+                    size = product.Size;
                 }
-                catch (Exception ex)
-                {
-                    StatusMessage = $"Datamark недоступен: {ex.Message}";
-                }
+            }
+            catch (DatamarkApiException ex) when (ex.StatusCode is 401 or 403)
+            {
+                IsAuthRequired = true;
+                StatusMessage = "Требуется авторизация Электронного знака. Проверьте логин и пароль в настройках.";
+                return;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Электронный знак недоступен: {ex.Message}";
             }
         }
 
