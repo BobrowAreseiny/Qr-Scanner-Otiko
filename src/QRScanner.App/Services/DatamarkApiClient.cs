@@ -154,7 +154,7 @@ public sealed class DatamarkApiClient : IDatamarkApiClient
 
         if (!settings.HasCredentials)
         {
-            throw new InvalidOperationException("Не заданы логин и пароль Честного знака.");
+            throw new InvalidOperationException("Не заданы логин и пароль Электронного знака.");
         }
 
         var uri = BuildUri(settings.BaseUrl, "auth");
