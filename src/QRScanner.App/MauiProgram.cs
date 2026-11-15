@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using QRScanner.App.Data;
 using QRScanner.App.Services;
 using QRScanner.App.ViewModels;
@@ -27,6 +28,10 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IDatamarkApiClient, DatamarkApiClient>();
 		builder.Services.AddSingleton<IOneCSettingsService, SecureStorageOneCSettingsService>();
 		builder.Services.AddSingleton<IOneCApiClient, OneCApiClient>();
+		builder.Services.AddSingleton<IQrCodeService, QrCodeService>();
+		builder.Services.AddSingleton<FileSaveService>();
+		builder.Services.AddSingleton<IFileSaveService>(
+			services => services.GetRequiredService<FileSaveService>());
 
 		builder.Services.AddSingleton<IDbKeyProvider, SecureStorageDbKeyProvider>();
 		builder.Services.AddSingleton<LegacyDatabaseImporter>();
