@@ -67,7 +67,9 @@ tests/QRScanner.Core.Tests/
 - `Data/DatabaseService.cs` — подключение и CRUD;
 - `Data/SecureStorageDbKeyProvider.cs` — ключ БД;
 - `Services/ScannerService.cs` — приём сканера;
-- `Services/DatamarkApiClient.cs` — Datamark;
+- `Services/DatamarkApiClient.cs` — API Электронного знака;
+- `Services/Datamark/DatamarkDtos.cs` — модели товара и ошибок API;
+- `ViewModels/GtinCheckViewModel.cs` — проверка GTIN;
 - `Services/OneCApiClient.cs` — HTTP-обмен с 1С;
 - `Services/SecureStorageOneCSettingsService.cs` — настройки 1С;
 - `Services/FileLoggerProvider.cs` — файловый логгер;
@@ -75,6 +77,7 @@ tests/QRScanner.Core.Tests/
 - `Services/QrCodeService.cs` — QR-код короба;
 - `Services/FileSaveService.cs` — сохранение файла через системный выбор;
 - `ViewModels/CorobDetailViewModel.cs` — короб, марки, QR;
+- `Barcodes/GtinValidator.cs` — проверка контрольной суммы GTIN;
 - `ViewModels/OrderViewModel.cs` — заказ и экспорт;
 - `ViewModels/OneCSettingsViewModel.cs` — подключение к 1С;
 - `ViewModels/LogsViewModel.cs` — экран логов;

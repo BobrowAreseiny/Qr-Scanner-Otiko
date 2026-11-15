@@ -103,14 +103,15 @@ tests/QRScanner.Core.Tests/
 - API-обмен заказами с 1С — `feature/1c-api`;
 - код восстановления и резервные копии БД — `feature/db-recovery`;
 - файловые логи и экран «Логи» — `feature/file-logging`;
-- смена логина и пароля Электронного знака — `fix/datamark-credentials`.
+- смена логина и пароля Электронного знака — `fix/datamark-credentials`;
+- проверка GTIN и карточка товара — `feature/gtin-check`;
+- справка — `feature/help`.
 
 Не реализовано:
 
 - запрет добавления марки без авторизации Datamark;
-- справка;
 - CI (GitHub Actions);
-- проверка с реальными учётными данными Datamark;
+- проверка API Электронного знака с рабочим паролем;
 - финальная release-подпись.
 
 Подробный план — в [docs/PROJECT-STATE.md](docs/PROJECT-STATE.md).
