@@ -57,7 +57,7 @@ tests/QRScanner.Core.Tests/
 - Shell и DI: `AppShell`, `MauiProgram`.
 - Данные: SQLite + SQLCipher, ключ в `SecureStorage`.
 - Сканер: broadcast `com.xcheng.scanner.action.BARCODE_DECODING_BROADCAST`.
-- Datamark: `/auth`, `/items/findItems`.
+- Электронный знак (Datamark): API `https://api.datamark.by/`, кабинет `https://i.datamark.by/`, эндпоинты `/auth`, `/items/findItems`. Подробности — `docs/DATAMARK.md`.
 - QR: генерация PNG, системное «Поделиться», сохранение через SAF.
 - Заказы: сохранение в БД, экспорт `.txt`, HTTP-обмен с 1С.
 - Логи: файлы `files/Logs/qrscanner-YYYY-MM-DD.log`, экран просмотра и отправки ZIP.

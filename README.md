@@ -103,7 +103,7 @@ tests/QRScanner.Core.Tests/
 - API-обмен заказами с 1С — `feature/1c-api`;
 - код восстановления и резервные копии БД — `feature/db-recovery`;
 - файловые логи и экран «Логи» — `feature/file-logging`;
-- смена логина и пароля Честного знака — `fix/datamark-credentials`.
+- смена логина и пароля Электронного знака — `fix/datamark-credentials`.
 
 Не реализовано:
 
@@ -115,3 +115,4 @@ tests/QRScanner.Core.Tests/
 
 Подробный план — в [docs/PROJECT-STATE.md](docs/PROJECT-STATE.md).
 Контракт обмена с 1С — в [docs/1C-API.md](docs/1C-API.md).
+Электронный знак, API и официальные приложения — в [docs/DATAMARK.md](docs/DATAMARK.md).
