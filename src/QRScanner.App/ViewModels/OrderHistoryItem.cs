@@ -11,4 +11,6 @@ public sealed class OrderHistoryItem
     public string CountText { get; init; } = string.Empty;
 
     public string StatusText { get; init; } = string.Empty;
+
+    public string OneCStatusText { get; init; } = string.Empty;
 }

@@ -48,6 +48,8 @@
                                             <Label Text="{Binding StatusText}"
                                                    Style="{StaticResource ListMetaLabel}" />
                                         </HorizontalStackLayout>
+                                        <Label Text="{Binding OneCStatusText}"
+                                               Style="{StaticResource ListMetaLabel}" />
                                     </VerticalStackLayout>
 
                                     <Button Grid.Column="1"

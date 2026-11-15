@@ -17,4 +17,14 @@ public sealed class OrderEntity
     public bool IsExported { get; set; }
 
     public DateTime? ExportedAtUtc { get; set; }
+
+    public string ExternalId { get; set; } = string.Empty;
+
+    public bool IsSentTo1C { get; set; }
+
+    public DateTime? SentTo1CAtUtc { get; set; }
+
+    public string? OneCNumber { get; set; }
+
+    public string? OneCError { get; set; }
 }

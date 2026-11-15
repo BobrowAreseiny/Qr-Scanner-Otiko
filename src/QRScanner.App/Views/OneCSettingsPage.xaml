@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:QRScanner.App.Controls"
+             x:Class="QRScanner.App.Views.OneCSettingsPage"
+             Title="1С: подключение"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="40,3,*,Auto"
+          BackgroundColor="{StaticResource Background}">
+
+        <controls:AppToolbar Grid.Row="0"
+                             Title="1С: подключение"
+                             ShowBack="True"
+                             BackCommand="{Binding BackCommand}" />
+
+        <BoxView Grid.Row="1"
+                 Style="{StaticResource ThinDivider}" />
+
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16,8,16,32" Spacing="0">
+
+                <Label Text="ПОДКЛЮЧЕНИЕ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+
+                <Label Text="Адрес API"
+                       Style="{StaticResource SettingLabel}"
+                       Margin="0,0,0,4" />
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource Border}"
+                        StrokeThickness="1"
+                        StrokeShape="Rectangle"
+                        Padding="8,0"
+                        Margin="0,0,0,10">
+                    <Entry Text="{Binding BaseUrl, Mode=TwoWay}"
+                           Placeholder="http://server/1c" />
+                </Border>
+
+                <Label Text="Путь отправки заказов"
+                       Style="{StaticResource SettingLabel}"
+                       Margin="0,0,0,4" />
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource Border}"
+                        StrokeThickness="1"
+                        StrokeShape="Rectangle"
+                        Padding="8,0"
+                        Margin="0,0,0,10">
+                    <Entry Text="{Binding OrdersPath, Mode=TwoWay}"
+                           Placeholder="/api/qrscanner/orders" />
+                </Border>
+
+                <Label Text="Путь проверки"
+                       Style="{StaticResource SettingLabel}"
+                       Margin="0,0,0,4" />
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource Border}"
+                        StrokeThickness="1"
+                        StrokeShape="Rectangle"
+                        Padding="8,0"
+                        Margin="0,0,0,10">
+                    <Entry Text="{Binding HealthPath, Mode=TwoWay}"
+                           Placeholder="/api/qrscanner/health" />
+                </Border>
+
+                <Label Text="Авторизация"
+                       Style="{StaticResource SettingLabel}"
+                       Margin="0,0,0,4" />
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource Border}"
+                        StrokeThickness="1"
+                        StrokeShape="Rectangle"
+                        Padding="8,0"
+                        Margin="0,0,0,10">
+                    <Picker ItemsSource="{Binding AuthTypes}"
+                            SelectedItem="{Binding SelectedAuthType, Mode=TwoWay}" />
+                </Border>
+
+                <VerticalStackLayout Spacing="0"
+                                     IsVisible="{Binding IsBearerAuth}">
+                    <Label Text="Bearer-токен"
+                           Style="{StaticResource SettingLabel}"
+                           Margin="0,0,0,4" />
+                    <Border BackgroundColor="{StaticResource Surface}"
+                            Stroke="{StaticResource Border}"
+                            StrokeThickness="1"
+                            StrokeShape="Rectangle"
+                            Padding="8,0"
+                            Margin="0,0,0,10">
+                        <Entry Text="{Binding Token, Mode=TwoWay}"
+                               IsPassword="True"
+                               Placeholder="Токен" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="0"
+                                     IsVisible="{Binding IsBasicAuth}">
+                    <Label Text="Логин"
+                           Style="{StaticResource SettingLabel}"
+                           Margin="0,0,0,4" />
+                    <Border BackgroundColor="{StaticResource Surface}"
+                            Stroke="{StaticResource Border}"
+                            StrokeThickness="1"
+                            StrokeShape="Rectangle"
+                            Padding="8,0"
+                            Margin="0,0,0,10">
+                        <Entry Text="{Binding Login, Mode=TwoWay}"
+                               Placeholder="Пользователь 1С" />
+                    </Border>
+
+                    <Label Text="Пароль"
+                           Style="{StaticResource SettingLabel}"
+                           Margin="0,0,0,4" />
+                    <Border BackgroundColor="{StaticResource Surface}"
+                            Stroke="{StaticResource Border}"
+                            StrokeThickness="1"
+                            StrokeShape="Rectangle"
+                            Padding="8,0"
+                            Margin="0,0,0,10">
+                        <Entry Text="{Binding Password, Mode=TwoWay}"
+                               IsPassword="True"
+                               Placeholder="Пароль 1С" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <Label Text="Склад"
+                       Style="{StaticResource SettingLabel}"
+                       Margin="0,0,0,4" />
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource Border}"
+                        StrokeThickness="1"
+                        StrokeShape="Rectangle"
+                        Padding="8,0"
+                        Margin="0,0,0,10">
+                    <Entry Text="{Binding Warehouse, Mode=TwoWay}"
+                           Placeholder="Основной склад" />
+                </Border>
+
+                <Label Text="Таймаут, секунд"
+                       Style="{StaticResource SettingLabel}"
+                       Margin="0,0,0,4" />
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource Border}"
+                        StrokeThickness="1"
+                        StrokeShape="Rectangle"
+                        Padding="8,0"
+                        Margin="0,0,0,10">
+                    <Entry Text="{Binding TimeoutSeconds, Mode=TwoWay}"
+                           Keyboard="Numeric"
+                           Placeholder="30" />
+                </Border>
+
+                <Grid ColumnDefinitions="*,Auto" Padding="0,8">
+                    <Label Text="Разрешить самоподписанный сертификат"
+                           Style="{StaticResource SettingLabel}" />
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding AllowInvalidCertificate, Mode=TwoWay}" />
+                </Grid>
+
+                <Label Text="Только для локального сервера 1С. Снижает защиту соединения."
+                       Style="{StaticResource BodyLabel}"
+                       Margin="0,0,0,8" />
+
+                <Button Text="Сохранить настройки"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,4,0,0"
+                        Command="{Binding SaveCommand}" />
+
+                <Button Text="Проверить подключение"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,8,0,0"
+                        Command="{Binding TestCommand}" />
+
+                <Button Text="Отправить ожидающие заказы"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,8,0,0"
+                        Command="{Binding SendPendingCommand}" />
+
+                <Label Text="{Binding StatusMessage}"
+                       Style="{StaticResource BodyLabel}"
+                       Margin="0,10,0,0" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <VerticalStackLayout Grid.Row="3"
+                             Padding="0,4,0,12"
+                             Spacing="8"
+                             BackgroundColor="{StaticResource Background}">
+            <Button Text="0. Назад"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    Margin="7,0"
+                    Command="{Binding BackCommand}" />
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>

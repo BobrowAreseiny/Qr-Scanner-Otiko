@@ -66,7 +66,14 @@ public sealed partial class OrderHistoryViewModel : ObservableObject
                     Name = order.Name,
                     DateText = order.CreatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm"),
                     CountText = FormatCount(lines.Count),
-                    StatusText = order.IsShipped ? "Отправлено" : "На складе"
+                    StatusText = order.IsShipped ? "Отправлено" : "На складе",
+                    OneCStatusText = order.IsSentTo1C
+                        ? string.IsNullOrWhiteSpace(order.OneCNumber)
+                            ? "1С: отправлен"
+                            : $"1С: №{order.OneCNumber}"
+                        : string.IsNullOrWhiteSpace(order.OneCError)
+                            ? "1С: ожидает"
+                            : "1С: ошибка"
                 });
             }
 

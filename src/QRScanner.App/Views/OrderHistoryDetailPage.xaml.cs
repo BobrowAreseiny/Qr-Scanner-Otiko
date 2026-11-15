@@ -56,6 +56,9 @@ public partial class OrderHistoryDetailPage : ContentPage, IQueryAttributable
             case 2:
                 _viewModel.ReturnCommand.Execute(null);
                 break;
+            case 3:
+                _viewModel.SendTo1CCommand.Execute(null);
+                break;
             case 0:
                 _viewModel.BackCommand.Execute(null);
                 break;

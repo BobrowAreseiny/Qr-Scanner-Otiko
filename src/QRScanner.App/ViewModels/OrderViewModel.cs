@@ -16,19 +16,25 @@ public sealed partial class OrderViewModel : ObservableObject
     private readonly IDialogService _dialogs;
     private readonly IApiSettingsService _apiSettings;
     private readonly IDatamarkApiClient _apiClient;
+    private readonly IOneCSettingsService _oneCSettings;
+    private readonly IOneCApiClient _oneCClient;
 
     public OrderViewModel(
         IDatabaseService database,
         INavigationService navigation,
         IDialogService dialogs,
         IApiSettingsService apiSettings,
-        IDatamarkApiClient apiClient)
+        IDatamarkApiClient apiClient,
+        IOneCSettingsService oneCSettings,
+        IOneCApiClient oneCClient)
     {
         _database = database;
         _navigation = navigation;
         _dialogs = dialogs;
         _apiSettings = apiSettings;
         _apiClient = apiClient;
+        _oneCSettings = oneCSettings;
+        _oneCClient = oneCClient;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
@@ -236,7 +242,8 @@ public sealed partial class OrderViewModel : ObservableObject
             {
                 Name = Name.Trim(),
                 CreatedAtUtc = DateTime.UtcNow,
-                IsShipped = true
+                IsShipped = true,
+                ExternalId = Guid.NewGuid().ToString("D")
             });
 
             foreach (var line in Lines)
@@ -264,8 +271,13 @@ public sealed partial class OrderViewModel : ObservableObject
             }
 
             var path = await ExportAsync(Name.Trim(), Lines.Select(l => l.Barcode));
-            StatusMessage = $"Сохранено: {Path.GetFileName(path)}";
-            await _dialogs.ShowAlertAsync("Заказ", $"Файл сохранён:\n{path}", "OK");
+            var oneCStatus = await TrySendTo1CAsync(order);
+
+            StatusMessage = $"Сохранено: {Path.GetFileName(path)}. {oneCStatus}";
+            await _dialogs.ShowAlertAsync(
+                "Заказ",
+                $"Файл сохранён:\n{path}\n\n{oneCStatus}",
+                "OK");
         }
         catch (Exception ex)
         {
@@ -275,6 +287,44 @@ public sealed partial class OrderViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private async Task<string> TrySendTo1CAsync(OrderEntity order)
+    {
+        var settings = await _oneCSettings.LoadAsync();
+        if (!settings.IsConfigured)
+        {
+            return "1С: API не настроен.";
+        }
+
+        try
+        {
+            OneCOrderRequestFactory.EnsureExternalId(order);
+            var request = OneCOrderRequestFactory.Create(order, Lines, settings.Warehouse);
+            var result = await _oneCClient.SendOrderAsync(settings, request);
+
+            if (result.Success)
+            {
+                order.IsSentTo1C = true;
+                order.SentTo1CAtUtc = DateTime.UtcNow;
+                order.OneCNumber = result.Number;
+                order.OneCError = null;
+                await _database.SaveOrderAsync(order);
+                return result.Message;
+            }
+
+            order.IsSentTo1C = false;
+            order.OneCError = result.Message;
+            await _database.SaveOrderAsync(order);
+            return $"1С: {result.Message}";
+        }
+        catch (Exception ex)
+        {
+            order.IsSentTo1C = false;
+            order.OneCError = ex.Message;
+            await _database.SaveOrderAsync(order);
+            return $"1С: ошибка отправки: {ex.Message}";
         }
     }
 

@@ -12,20 +12,27 @@ public sealed partial class OrderHistoryDetailViewModel : ObservableObject
     private readonly IDatabaseService _database;
     private readonly INavigationService _navigation;
     private readonly IDialogService _dialogs;
+    private readonly IOneCSettingsService _oneCSettings;
+    private readonly IOneCApiClient _oneCClient;
 
     private OrderEntity? _order;
 
     public OrderHistoryDetailViewModel(
         IDatabaseService database,
         INavigationService navigation,
-        IDialogService dialogs)
+        IDialogService dialogs,
+        IOneCSettingsService oneCSettings,
+        IOneCApiClient oneCClient)
     {
         _database = database;
         _navigation = navigation;
         _dialogs = dialogs;
+        _oneCSettings = oneCSettings;
+        _oneCClient = oneCClient;
 
         ShipCommand = new AsyncRelayCommand(() => SetShippedAsync(true));
         ReturnCommand = new AsyncRelayCommand(() => SetShippedAsync(false));
+        SendTo1CCommand = new AsyncRelayCommand(SendTo1CAsync);
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
     }
 
@@ -34,6 +41,8 @@ public sealed partial class OrderHistoryDetailViewModel : ObservableObject
     public IAsyncRelayCommand ShipCommand { get; }
 
     public IAsyncRelayCommand ReturnCommand { get; }
+
+    public IAsyncRelayCommand SendTo1CCommand { get; }
 
     public IAsyncRelayCommand BackCommand { get; }
 
@@ -51,6 +60,12 @@ public sealed partial class OrderHistoryDetailViewModel : ObservableObject
 
     [ObservableProperty]
     private string statusMessage = string.Empty;
+
+    [ObservableProperty]
+    private string oneCStatusText = "1С: не настроен";
+
+    [ObservableProperty]
+    private bool canSendTo1C;
 
     public async Task LoadAsync(int id)
     {
@@ -75,6 +90,91 @@ public sealed partial class OrderHistoryDetailViewModel : ObservableObject
         }
 
         CountText = FormatCount(Lines.Count);
+        await RefreshOneCStatusAsync();
+    }
+
+    private async Task SendTo1CAsync()
+    {
+        if (_order is null)
+        {
+            return;
+        }
+
+        var settings = await _oneCSettings.LoadAsync();
+        if (!settings.IsConfigured)
+        {
+            StatusMessage = "1С: API не настроен.";
+            await _dialogs.ShowAlertAsync("1С", StatusMessage);
+            return;
+        }
+
+        var wasSent = _order.IsSentTo1C;
+
+        try
+        {
+            OneCOrderRequestFactory.EnsureExternalId(_order);
+            await _database.SaveOrderAsync(_order);
+
+            var request = OneCOrderRequestFactory.Create(_order, Lines, settings.Warehouse);
+            var result = await _oneCClient.SendOrderAsync(settings, request);
+
+            if (result.Success)
+            {
+                _order.IsSentTo1C = true;
+                _order.SentTo1CAtUtc = DateTime.UtcNow;
+                _order.OneCNumber = result.Number;
+                _order.OneCError = null;
+            }
+            else
+            {
+                _order.IsSentTo1C = wasSent;
+                _order.OneCError = result.Message;
+            }
+
+            await _database.SaveOrderAsync(_order);
+            await RefreshOneCStatusAsync();
+            StatusMessage = result.Message;
+            await _dialogs.ShowAlertAsync("1С", result.Message);
+        }
+        catch (Exception ex)
+        {
+            _order.IsSentTo1C = wasSent;
+            _order.OneCError = ex.Message;
+            await _database.SaveOrderAsync(_order);
+            await RefreshOneCStatusAsync();
+            StatusMessage = $"Ошибка отправки в 1С: {ex.Message}";
+            await _dialogs.ShowAlertAsync("1С", StatusMessage);
+        }
+    }
+
+    private async Task RefreshOneCStatusAsync()
+    {
+        var settings = await _oneCSettings.LoadAsync();
+        CanSendTo1C = settings.IsConfigured;
+
+        if (!settings.IsConfigured)
+        {
+            OneCStatusText = "1С: не настроен";
+            return;
+        }
+
+        if (_order is null)
+        {
+            OneCStatusText = string.Empty;
+            return;
+        }
+
+        if (_order.IsSentTo1C)
+        {
+            OneCStatusText = string.IsNullOrWhiteSpace(_order.OneCNumber)
+                ? "1С: отправлен"
+                : $"1С: отправлен, №{_order.OneCNumber}";
+            return;
+        }
+
+        OneCStatusText = string.IsNullOrWhiteSpace(_order.OneCError)
+            ? "1С: ожидает отправки"
+            : $"1С: ошибка — {_order.OneCError}";
     }
 
     private async Task SetShippedAsync(bool shipped)

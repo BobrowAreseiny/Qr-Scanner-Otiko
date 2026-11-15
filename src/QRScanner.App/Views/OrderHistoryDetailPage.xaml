@@ -47,11 +47,25 @@
                                    Text="{Binding StatusText}"
                                    Style="{StaticResource SettingValueLabel}" />
                         </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="1С"
+                                   Style="{StaticResource SettingLabel}" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding OneCStatusText}"
+                                   Style="{StaticResource SettingValueLabel}" />
+                        </Grid>
                     </VerticalStackLayout>
                 </Border>
 
                 <Label Text="{Binding StatusMessage}"
                        Style="{StaticResource BodyLabel}" />
+
+                <Button Text="Отправить в 1С"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        IsVisible="{Binding CanSendTo1C}"
+                        Command="{Binding SendTo1CCommand}" />
 
                 <Label Text="Марки"
                        Style="{StaticResource SectionHeaderLabel}"
