@@ -54,20 +54,6 @@
                            Placeholder="Пароль Электронного знака" />
                 </Border>
 
-                <Button Text="Импорт из credentials.txt"
-                        Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="36"
-                        Margin="0,4,0,0"
-                        Command="{Binding ImportCredentialsCommand}" />
-
-                <Button Text="Удалить credentials.txt"
-                        Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="36"
-                        Margin="0,6,0,0"
-                        BackgroundColor="{StaticResource Danger}"
-                        TextColor="{StaticResource White}"
-                        Command="{Binding DeleteCredentialsFileCommand}" />
-
                 <Button Text="Проверить подключение"
                         Style="{StaticResource MenuButtonStyle}"
                         HeightRequest="40"
@@ -100,7 +86,7 @@
                        Style="{StaticResource BodyLabel}"
                        Margin="0,4,0,0" />
 
-                <Label Text="Файл credentials.txt: Android/data/&lt;package&gt;/files/credentials.txt. Файл хранит пароль в открытом виде — после импорта удалите его."
+                <Label Text="Логин и пароль хранятся только в защищённом хранилище Android и не записываются в логи."
                        Style="{StaticResource BodyLabel}"
                        Margin="0,4,0,0" />
 
