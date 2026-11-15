@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:QRScanner.App.Controls"
+             x:Class="QRScanner.App.Views.CorobInfoPage"
+             Title="Информация о коробе"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="40,3,*,Auto"
+          BackgroundColor="{StaticResource Background}">
+
+        <controls:AppToolbar Grid.Row="0"
+                             Title="Информация о коробе"
+                             ShowBack="True"
+                             BackCommand="{Binding BackCommand}" />
+
+        <BoxView Grid.Row="1"
+                 Style="{StaticResource ThinDivider}" />
+
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16,16,16,24" Spacing="14">
+
+                <Label Text="Сканируйте марку товара"
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="{Binding StatusMessage}"
+                       Style="{StaticResource BodyLabel}" />
+
+                <Border Style="{StaticResource CardStyle}"
+                        IsVisible="{Binding HasResult}">
+                    <VerticalStackLayout Spacing="4">
+
+                        <Label Text="Короб"
+                               Style="{StaticResource SettingLabel}" />
+
+                        <Label Text="{Binding CorobTitle}"
+                               Style="{StaticResource ListNameLabel}" />
+
+                        <Label Text="{Binding CorobMeta}"
+                               Style="{StaticResource ListMetaLabel}" />
+
+                        <BoxView Style="{StaticResource SettingRowSeparator}"
+                                 Margin="0,8" />
+
+                        <Label Text="Марка"
+                               Style="{StaticResource SettingLabel}" />
+
+                        <Label Text="{Binding BarcodeText}"
+                               Style="{StaticResource ListNameLabel}" />
+
+                        <Label Text="{Binding ProductText}"
+                               Style="{StaticResource ListMetaLabel}" />
+
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <VerticalStackLayout Grid.Row="3"
+                             Padding="0,4,0,12"
+                             Spacing="8"
+                             BackgroundColor="{StaticResource Background}">
+            <Button Text="1. Удалить марку"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    BackgroundColor="{StaticResource Danger}"
+                    TextColor="{StaticResource White}"
+                    IsVisible="{Binding HasResult}"
+                    Command="{Binding DeleteCommand}" />
+
+            <Button Text="0. Назад"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    Margin="7,0"
+                    Command="{Binding BackCommand}" />
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>

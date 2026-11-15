@@ -64,6 +64,9 @@ public static class MauiProgram
 		builder.Services.AddTransient<GtinCheckViewModel>();
 		builder.Services.AddTransient<GtinCheckPage>();
 
+		builder.Services.AddTransient<CorobInfoViewModel>();
+		builder.Services.AddTransient<CorobInfoPage>();
+
 		builder.Services.AddTransient<ShipmentViewModel>();
 		builder.Services.AddTransient<ShipmentPage>();
 
