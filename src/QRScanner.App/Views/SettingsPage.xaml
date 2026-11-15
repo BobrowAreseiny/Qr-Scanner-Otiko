@@ -54,12 +54,6 @@
                            Placeholder="Пароль Электронного знака" />
                 </Border>
 
-                <Button Text="Импорт из credentials.txt"
-                        Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="36"
-                        Margin="0,4,0,0"
-                        Command="{Binding ImportCredentialsCommand}" />
-
                 <Button Text="Проверить подключение"
                         Style="{StaticResource MenuButtonStyle}"
                         HeightRequest="40"
@@ -92,7 +86,7 @@
                        Style="{StaticResource BodyLabel}"
                        Margin="0,4,0,0" />
 
-                <Label Text="Файл credentials.txt: Android/data/&lt;package&gt;/files/credentials.txt"
+                <Label Text="Логин и пароль хранятся только в защищённом хранилище Android и не записываются в логи."
                        Style="{StaticResource BodyLabel}"
                        Margin="0,4,0,0" />
 

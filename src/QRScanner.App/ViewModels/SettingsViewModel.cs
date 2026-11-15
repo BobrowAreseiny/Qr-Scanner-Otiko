@@ -10,25 +10,21 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IDialogService _dialogs;
     private readonly IApiSettingsService _apiSettings;
     private readonly IDatamarkApiClient _apiClient;
-    private readonly ICredentialsImporter _credentialsImporter;
 
     public SettingsViewModel(
         INavigationService navigation,
         IDialogService dialogs,
         IApiSettingsService apiSettings,
-        IDatamarkApiClient apiClient,
-        ICredentialsImporter credentialsImporter)
+        IDatamarkApiClient apiClient)
     {
         _navigation = navigation;
         _dialogs = dialogs;
         _apiSettings = apiSettings;
         _apiClient = apiClient;
-        _credentialsImporter = credentialsImporter;
 
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         TestCommand = new AsyncRelayCommand(TestAsync);
-        ImportCredentialsCommand = new AsyncRelayCommand(ImportCredentialsAsync);
         ShowAboutCommand = new AsyncRelayCommand(ShowAboutAsync);
     }
 
@@ -53,8 +49,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public IAsyncRelayCommand TestCommand { get; }
 
-    public IAsyncRelayCommand ImportCredentialsCommand { get; }
-
     public IAsyncRelayCommand ShowAboutCommand { get; }
 
     public async Task LoadAsync()
@@ -66,43 +60,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         StatusMessage = settings.HasCredentials
             ? "Данные Электронного знака (Datamark) загружены."
             : "Укажите логин и пароль Электронного знака.";
-
-        if (!settings.HasCredentials)
-        {
-            await TryImportCredentialsAsync(auto: true);
-        }
-    }
-
-    private async Task ImportCredentialsAsync()
-    {
-        await TryImportCredentialsAsync(auto: false);
-    }
-
-    private async Task TryImportCredentialsAsync(bool auto)
-    {
-        try
-        {
-            var imported = await _credentialsImporter.TryImportAsync();
-            if (imported is null)
-            {
-                if (!auto)
-                {
-                    StatusMessage = "Файл credentials.txt не найден.";
-                }
-
-                return;
-            }
-
-            Server = imported.BaseUrl;
-            Login = imported.Login;
-            Password = imported.Password;
-            StatusMessage =
-                $"Данные загружены из {Path.GetFileName(imported.SourcePath)}. Нажмите «Сохранить».";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Ошибка импорта: {ex.Message}";
-        }
     }
 
     private async Task SaveAsync()

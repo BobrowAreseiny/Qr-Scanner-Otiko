@@ -25,7 +25,6 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IScannerService, ScannerService>();
 		builder.Services.AddSingleton<IApiSettingsService, SecureStorageApiSettingsService>();
 		builder.Services.AddSingleton<IDatamarkApiClient, DatamarkApiClient>();
-		builder.Services.AddSingleton<ICredentialsImporter, LegacyCredentialsImporter>();
 
 		builder.Services.AddSingleton<IDbKeyProvider, SecureStorageDbKeyProvider>();
 		builder.Services.AddSingleton<LegacyDatabaseImporter>();
