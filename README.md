@@ -107,9 +107,10 @@ tests/QRScanner.Core.Tests/
 - запрет добавления марки без авторизации Datamark;
 - файловые логи;
 - справка;
-- экспорт для 1С;
+- API-обмен заказами с 1С;
 - CI (GitHub Actions);
 - проверка с реальными учётными данными Datamark;
 - финальная release-подпись.
 
 Подробный план — в [docs/PROJECT-STATE.md](docs/PROJECT-STATE.md).
+Контракт обмена с 1С — в [docs/1C-API.md](docs/1C-API.md).
