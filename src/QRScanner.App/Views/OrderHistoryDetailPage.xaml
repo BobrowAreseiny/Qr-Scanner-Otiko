@@ -63,7 +63,7 @@
 
                 <Button Text="Отправить в 1С"
                         Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="40"
+                        HeightRequest="52"
                         IsVisible="{Binding CanSendTo1C}"
                         Command="{Binding SendTo1CCommand}" />
 
@@ -77,16 +77,12 @@
                         <DataTemplate>
                             <Border Style="{StaticResource CardStyle}">
                                 <VerticalStackLayout Spacing="2">
-                                    <Label Text="{Binding SourceText}"
+                                    <Label Text="{Binding DisplayTitle}"
                                            Style="{StaticResource ListNameLabel}" />
-                                    <Label Text="{Binding Barcode}"
+                                    <Label Text="{Binding SourceText}"
                                            Style="{StaticResource ListMetaLabel}" />
-                                    <HorizontalStackLayout Spacing="10">
-                                        <Label Text="{Binding VendorCode}"
-                                               Style="{StaticResource ListMetaLabel}" />
-                                        <Label Text="{Binding Size}"
-                                               Style="{StaticResource ListMetaLabel}" />
-                                    </HorizontalStackLayout>
+                                    <Label Text="{Binding ProductDetails}"
+                                           Style="{StaticResource ListMetaLabel}" />
                                 </VerticalStackLayout>
                             </Border>
                         </DataTemplate>
@@ -102,18 +98,18 @@
                              BackgroundColor="{StaticResource Background}">
             <Button Text="1. Отправлено"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Command="{Binding ShipCommand}" />
 
             <Button Text="2. Вернуть на склад"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Margin="7,0"
                     Command="{Binding ReturnCommand}" />
 
             <Button Text="0. Назад"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Margin="7,0"
                     Command="{Binding BackCommand}" />
         </VerticalStackLayout>

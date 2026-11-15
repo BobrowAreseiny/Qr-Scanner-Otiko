@@ -13,7 +13,7 @@
                              Title="Агрегация" />
 
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="0,30,0,0" Spacing="40">
+            <VerticalStackLayout Padding="0,20,0,0" Spacing="16">
 
                 <Button Text="1. Создать короб"
                         Style="{StaticResource MenuButtonStyle}"

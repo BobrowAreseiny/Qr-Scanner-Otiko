@@ -368,7 +368,7 @@ public sealed partial class OrderViewModel : ObservableObject
 
         await File.WriteAllLinesAsync(
             path,
-            barcodes,
+            barcodes.Select(BarcodeParser.CleanForExport),
             new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
         return path;

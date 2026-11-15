@@ -28,4 +28,14 @@ public class BarcodeParserTests
     {
         Assert.Equal(expected, BarcodeParser.IsCorobCode(code));
     }
+
+    [Theory]
+    [InlineData("è010460000000000121ABC", "010460000000000121ABC")]
+    [InlineData("010460000000000121ABC", "010460000000000121ABC")]
+    [InlineData("  è0104600000000001  ", "0104600000000001")]
+    [InlineData(null, "")]
+    public void Cleans_marking_code_for_export(string? code, string expected)
+    {
+        Assert.Equal(expected, BarcodeParser.CleanForExport(code));
+    }
 }

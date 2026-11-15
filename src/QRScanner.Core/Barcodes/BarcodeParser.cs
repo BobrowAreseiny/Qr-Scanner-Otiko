@@ -11,6 +11,17 @@ public static class BarcodeParser
         return code?.Trim().Trim('\r', '\n', '\0') ?? string.Empty;
     }
 
+    public static string CleanForExport(string? code)
+    {
+        var normalized = Normalize(code);
+        if (normalized.StartsWith('è'))
+        {
+            normalized = normalized[1..];
+        }
+
+        return normalized;
+    }
+
     public static string? ExtractGtin(string? code)
     {
         var normalized = Normalize(code);

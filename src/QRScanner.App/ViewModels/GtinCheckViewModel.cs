@@ -103,7 +103,7 @@ public sealed partial class GtinCheckViewModel : ObservableObject
         {
             IsAuthRequired = true;
             IsResultVisible = false;
-            StatusMessage = "Требуется авторизация Электронного знака. Укажите логин и пароль в настройках.";
+            StatusMessage = "Требуется авторизация. Войдите в настройках.";
             return;
         }
 

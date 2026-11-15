@@ -18,8 +18,8 @@
         <BoxView Grid.Row="1"
                  Style="{StaticResource ThinDivider}" />
 
-        <ScrollView Grid.Row="2">
-            <VerticalStackLayout Padding="16,16,16,24" Spacing="14">
+        <ScrollView Grid.Row="2" x:Name="ContentScroll">
+            <VerticalStackLayout Padding="16,8,16,12" Spacing="8">
 
                 <Label Text="Название"
                        Style="{StaticResource SectionHeaderLabel}"
@@ -31,6 +31,7 @@
                         StrokeShape="Rectangle"
                         Padding="8,0">
                     <Entry Text="{Binding Corob.Name, Mode=TwoWay}"
+                           HeightRequest="44"
                            Placeholder="Название короба" />
                 </Border>
 
@@ -48,15 +49,12 @@
                        Style="{StaticResource SectionHeaderLabel}"
                        Margin="0,0,0,0" />
 
-                <Label Text="Сканируйте марки товара"
-                       Style="{StaticResource BodyLabel}" />
-
                 <Label Text="{Binding StatusMessage}"
                        Style="{StaticResource BodyLabel}" />
 
-                <Button Text="Авторизоваться"
+                <Button Text="Войти в настройки"
                         Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="40"
+                        HeightRequest="48"
                         Margin="0,6,0,0"
                         IsVisible="{Binding IsAuthRequired}"
                         Command="{Binding OpenSettingsCommand}" />
@@ -69,22 +67,19 @@
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
 
                                     <VerticalStackLayout Spacing="2">
-                                        <Label Text="{Binding Gtin}"
+                                        <Label Text="{Binding DisplayTitle}"
                                                Style="{StaticResource ListNameLabel}" />
-                                        <Label Text="{Binding Barcode}"
+                                        <Label Text="{Binding ProductDetails}"
                                                Style="{StaticResource ListMetaLabel}" />
-                                        <HorizontalStackLayout Spacing="10">
-                                            <Label Text="{Binding VendorCode}"
-                                                   Style="{StaticResource ListMetaLabel}" />
-                                            <Label Text="{Binding Size}"
-                                                   Style="{StaticResource ListMetaLabel}" />
-                                        </HorizontalStackLayout>
                                     </VerticalStackLayout>
 
                                     <Button Grid.Column="1"
                                             Text="✕"
-                                            WidthRequest="36"
+                                            WidthRequest="48"
+                                            MinimumWidthRequest="48"
+                                            FontSize="22"
                                             Style="{StaticResource SmallDangerButtonStyle}"
+                                            SemanticProperties.Description="Удалить марку"
                                             Command="{Binding Path=BindingContext.DeleteBarcodeCommand, Source={x:Reference Root}}"
                                             CommandParameter="{Binding}" />
                                 </Grid>
@@ -102,18 +97,18 @@
                              BackgroundColor="{StaticResource Background}">
             <Button Text="1. Сохранить"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Command="{Binding SaveCommand}" />
 
             <Button Text="2. QR"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Margin="7,0"
                     Command="{Binding QrMenuCommand}" />
 
             <Button Text="0. Назад"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Margin="7,0"
                     Command="{Binding BackCommand}" />
         </VerticalStackLayout>

@@ -162,19 +162,19 @@
 
                 <Button Text="Сохранить настройки"
                         Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="40"
+                        HeightRequest="52"
                         Margin="0,4,0,0"
                         Command="{Binding SaveCommand}" />
 
                 <Button Text="Проверить подключение"
                         Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="40"
+                        HeightRequest="52"
                         Margin="0,8,0,0"
                         Command="{Binding TestCommand}" />
 
                 <Button Text="Отправить ожидающие заказы"
                         Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="40"
+                        HeightRequest="52"
                         Margin="0,8,0,0"
                         Command="{Binding SendPendingCommand}" />
 
@@ -191,7 +191,7 @@
                              BackgroundColor="{StaticResource Background}">
             <Button Text="0. Назад"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Margin="7,0"
                     Command="{Binding BackCommand}" />
         </VerticalStackLayout>

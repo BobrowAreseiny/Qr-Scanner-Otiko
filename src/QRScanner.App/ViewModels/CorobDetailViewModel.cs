@@ -104,7 +104,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         IsAuthRequired = !settings.HasCredentials;
         if (IsAuthRequired)
         {
-            StatusMessage = "Требуется авторизация Электронного знака. Отсканируйте марку после входа.";
+            StatusMessage = "Требуется авторизация. Войдите в настройках.";
         }
     }
 
@@ -131,7 +131,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         if (!settings.HasCredentials)
         {
             IsAuthRequired = true;
-            StatusMessage = "Требуется авторизация Электронного знака. Укажите логин и пароль в настройках.";
+            StatusMessage = "Требуется авторизация. Войдите в настройках.";
             return;
         }
 

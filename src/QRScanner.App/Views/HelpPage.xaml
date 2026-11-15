@@ -161,7 +161,7 @@
                              BackgroundColor="{StaticResource Background}">
             <Button Text="0. Назад"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Margin="7,0"
                     Command="{Binding BackCommand}" />
         </VerticalStackLayout>

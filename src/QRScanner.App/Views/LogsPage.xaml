@@ -63,13 +63,13 @@
 
                 <Button Text="Поделиться логами"
                         Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="40"
+                        HeightRequest="52"
                         Margin="0,10,0,0"
                         Command="{Binding ShareCommand}" />
 
                 <Button Text="Обновить"
                         Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="40"
+                        HeightRequest="52"
                         Margin="0,8,0,0"
                         Command="{Binding RefreshCommand}" />
 
@@ -82,7 +82,7 @@
                              BackgroundColor="{StaticResource Background}">
             <Button Text="0. Назад"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Margin="7,0"
                     Command="{Binding BackCommand}" />
         </VerticalStackLayout>

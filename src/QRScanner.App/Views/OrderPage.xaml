@@ -50,9 +50,9 @@
                 <Label Text="{Binding StatusMessage}"
                        Style="{StaticResource BodyLabel}" />
 
-                <Button Text="Авторизоваться"
+                <Button Text="Войти в настройки"
                         Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="40"
+                        HeightRequest="52"
                         Margin="0,6,0,0"
                         IsVisible="{Binding IsAuthRequired}"
                         Command="{Binding OpenSettingsCommand}" />
@@ -65,22 +65,19 @@
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
 
                                     <VerticalStackLayout Spacing="2">
-                                        <Label Text="{Binding Gtin}"
+                                        <Label Text="{Binding DisplayTitle}"
                                                Style="{StaticResource ListNameLabel}" />
-                                        <Label Text="{Binding Barcode}"
+                                        <Label Text="{Binding ProductDetails}"
                                                Style="{StaticResource ListMetaLabel}" />
-                                        <HorizontalStackLayout Spacing="10">
-                                            <Label Text="{Binding VendorCode}"
-                                                   Style="{StaticResource ListMetaLabel}" />
-                                            <Label Text="{Binding Size}"
-                                                   Style="{StaticResource ListMetaLabel}" />
-                                        </HorizontalStackLayout>
                                     </VerticalStackLayout>
 
                                     <Button Grid.Column="1"
                                             Text="✕"
-                                            WidthRequest="36"
+                                            WidthRequest="48"
+                                            MinimumWidthRequest="48"
+                                            FontSize="22"
                                             Style="{StaticResource SmallDangerButtonStyle}"
+                                            SemanticProperties.Description="Удалить марку"
                                             Command="{Binding Path=BindingContext.DeleteLineCommand, Source={x:Reference Root}}"
                                             CommandParameter="{Binding}" />
                                 </Grid>
@@ -98,12 +95,12 @@
                              BackgroundColor="{StaticResource Background}">
             <Button Text="1. Сохранить"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Command="{Binding SaveCommand}" />
 
             <Button Text="0. Назад"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Margin="7,0"
                     Command="{Binding BackCommand}" />
         </VerticalStackLayout>

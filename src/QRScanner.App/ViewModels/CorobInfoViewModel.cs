@@ -100,7 +100,7 @@ public sealed partial class CorobInfoViewModel : ObservableObject
 
             CorobTitle = corob.Name;
             CorobMeta = BuildCorobMeta(barcodes.Count, corob);
-            BarcodeText = barcode.Barcode;
+            BarcodeText = BarcodeParser.CleanForExport(barcode.Barcode);
             ProductText = BuildProductText(barcode);
             HasResult = true;
             StatusMessage = "Марка найдена.";
@@ -128,7 +128,7 @@ public sealed partial class CorobInfoViewModel : ObservableObject
 
         var confirmed = await _dialogs.ShowConfirmationAsync(
             "Удалить марку",
-            $"Удалить марку {barcode.Barcode} из короба {corob.Name}?",
+            $"Удалить марку {barcode.DisplayTitle} из короба {corob.Name}?",
             "Удалить",
             "Отмена");
 
@@ -179,9 +179,9 @@ public sealed partial class CorobInfoViewModel : ObservableObject
     {
         var parts = new[]
         {
-            barcode.VendorCode,
-            barcode.Size,
-            barcode.Gtin
+            string.IsNullOrWhiteSpace(barcode.VendorCode) ? null : $"Артикул: {barcode.VendorCode}",
+            string.IsNullOrWhiteSpace(barcode.Size) ? null : $"Размер: {barcode.Size}",
+            string.IsNullOrWhiteSpace(barcode.Gtin) ? null : $"GTIN: {barcode.Gtin}"
         };
 
         var text = string.Join(" · ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));

@@ -11,6 +11,7 @@
 
         <Label Text="←"
                Style="{StaticResource ToolbarIconLabel}"
+               SemanticProperties.Description="Назад"
                IsVisible="{Binding ShowBack, Source={x:Reference Root}}">
             <Label.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding BackCommand, Source={x:Reference Root}}" />
@@ -25,6 +26,7 @@
         <Label Grid.Column="2"
                Text="⋮"
                Style="{StaticResource ToolbarIconLabel}"
+               SemanticProperties.Description="Меню"
                IsVisible="{Binding ShowMenu, Source={x:Reference Root}}">
             <Label.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding MenuCommand, Source={x:Reference Root}}" />

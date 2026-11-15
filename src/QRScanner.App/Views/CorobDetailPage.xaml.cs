@@ -42,6 +42,7 @@ public partial class CorobDetailPage : ContentPage, IQueryAttributable
         if (_corobId > 0)
         {
             await _viewModel.LoadAsync(_corobId);
+            await ContentScroll.ScrollToAsync(0, 0, false);
         }
     }
 

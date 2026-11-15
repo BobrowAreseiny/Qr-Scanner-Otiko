@@ -63,7 +63,7 @@
                              BackgroundColor="{StaticResource Background}">
             <Button Text="1. Удалить марку"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     BackgroundColor="{StaticResource Danger}"
                     TextColor="{StaticResource White}"
                     IsVisible="{Binding HasResult}"
@@ -71,7 +71,7 @@
 
             <Button Text="0. Назад"
                     Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="40"
+                    HeightRequest="52"
                     Margin="7,0"
                     Command="{Binding BackCommand}" />
         </VerticalStackLayout>
