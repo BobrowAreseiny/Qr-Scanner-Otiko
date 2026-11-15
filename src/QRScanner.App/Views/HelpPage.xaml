@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:QRScanner.App.Controls"
+             x:Class="QRScanner.App.Views.HelpPage"
+             Title="Справка"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="40,3,*,Auto"
+          BackgroundColor="{StaticResource Background}">
+
+        <controls:AppToolbar Grid.Row="0"
+                             Title="Справка"
+                             ShowBack="True"
+                             BackCommand="{Binding BackCommand}" />
+
+        <BoxView Grid.Row="1"
+                 Style="{StaticResource ThinDivider}" />
+
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16,4,16,28" Spacing="0">
+
+                <Label Text="НАЗНАЧЕНИЕ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+                <Label Text="Приложение предназначено для учёта коробов и марок, отгрузки заказов и обмена данными с 1С. Работа выполняется сканером ТСД и клавишами 1, 2, 3, 0."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="ГЛАВНОЕ МЕНЮ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+                <Label Text="1. Агрегация — создание коробов, список коробов, поиск марки по коробу."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="2. Отгрузка — новый заказ и история заказов."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="0. Выход — закрыть приложение."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="Верхнее меню (⋮): Настройки, Логи, Справка, О программе, Выход."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="КЛАВИШИ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+                <Label Text="1 — основное действие: сохранить, удалить марку, отправить заказ."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="2 — дополнительное действие: QR-код короба или возврат заказа на склад."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="3 — отправить заказ в 1С в карточке заказа."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="0 — назад."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="В полях ввода клавиши работают как обычные цифры и буквы. Сканер срабатывает независимо от экрана."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="АГРЕГАЦИЯ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+                <Label Text="1. Создать короб"
+                       Style="{StaticResource ListNameLabel}" />
+                <Label Text="Укажите название и ёмкость: 12, 10, 5 или 3 марки. Сканируйте марки товара. Нажмите 1, чтобы сохранить."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="Одна марка не может находиться в двух коробах. Повторное сканирование уже добавленной марки блокируется. При заполнении короба новые марки не добавляются."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="2. Короба"
+                       Style="{StaticResource ListNameLabel}" />
+                <Label Text="Список сохранённых коробов. Кнопка «Открыть» показывает состав, кнопка «✕» удаляет короб вместе с его марками. Будьте внимательны: удаление короба необратимо."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="3. Информация"
+                       Style="{StaticResource ListNameLabel}" />
+                <Label Text="Отсканируйте марку. Приложение найдёт короб, в котором она лежит, и покажет данные. Клавиша 1 удаляет марку из короба."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="ОТГРУЗКА"
+                       Style="{StaticResource SectionHeaderLabel}" />
+                <Label Text="Новый заказ"
+                       Style="{StaticResource ListNameLabel}" />
+                <Label Text="Сканируйте короб — в заказ добавятся все его марки. Можно добавлять отдельные марки: смешанный заказ разрешён. Проверка дублей выполняется автоматически."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="Нажмите 1, чтобы сохранить заказ. Файл .txt создаётся в папке Otiko. Если настроен API 1С, заказ отправляется сразу; при ошибке он остаётся в очереди."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="История заказов"
+                       Style="{StaticResource ListNameLabel}" />
+                <Label Text="В списке отображаются дата, количество марок, статус склада и статус 1С. В карточке заказа доступны:"
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="1. Отправлено — отметить заказ отправленным."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="2. Вернуть на склад — снять статус отправки с коробов."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="3. Отправить в 1С — повторная отправка."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="Удаление заказа не удаляет короба и марки. Короба остаются на складе, статус «Отгружен» снимается."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="QR-КОД КОРОБА"
+                       Style="{StaticResource SectionHeaderLabel}" />
+                <Label Text="На экране короба нажмите 2. Выберите «Сохранить в файл» или «Поделиться». PNG содержит QR-код с ID короба и подпись с названием."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="Сохранение работает через системный выбор файла: Downloads, Google Drive, USB. На компьютере файл появится после синхронизации Google Drive."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="НАСТРОЙКИ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+                <Label Text="Электронный знак (Datamark)"
+                       Style="{StaticResource ListNameLabel}" />
+                <Label Text="Укажите сервер, логин и пароль. Кнопка «Проверить подключение» выполняет авторизацию. Данные можно менять в любой момент; после смены пароля введите новый и нажмите «Сохранить»."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="Без авторизации Электронного знака (Datamark) марки не добавляются: приложение покажет сообщение и предложит перейти в настройки."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="1С"
+                       Style="{StaticResource ListNameLabel}" />
+                <Label Text="Настройте адрес API, пути отправки и проверки, склад, таймаут и авторизацию: без авторизации, Bearer-токен или Basic. Для локального сервера можно разрешить самоподписанный сертификат."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="Кнопка «Проверить подключение» проверяет связь. «Отправить ожидающие заказы» повторно отправляет заказы, которые не ушли в 1С."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="БЕЗОПАСНОСТЬ И ДАННЫЕ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+                <Label Text="Локальная база шифруется SQLCipher. PIN и роли отсутствуют: настройки доступны любому пользователю ТСД."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="Код восстановления"
+                       Style="{StaticResource ListNameLabel}" />
+                <Label Text="В настройках можно показать код, скопировать его или сохранить в файл. Без кода восстановление зашифрованной базы невозможно. Храните код отдельно от ТСД."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="Резервные копии"
+                       Style="{StaticResource ListNameLabel}" />
+                <Label Text="Приложение создаёт зашифрованные копии: ежедневно (хранится 7), еженедельно (4), ежемесячно (3), плюс ручная копия. Копию можно сохранить в файл и восстановить с проверкой кода."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="Данные удаляются только вручную. Автоматической очистки коробов, марок и заказов нет."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="ЛОГИ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+                <Label Text="Откройте ⋮ → Логи. На экране отображаются файлы логов и последний лог. Кнопка «Поделиться логами» создаёт ZIP-архив."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="В логи не записываются пароли, токены и ключи."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="ВАЖНО"
+                       Style="{StaticResource SectionHeaderLabel}" />
+                <Label Text="• Одна марка — только в одном коробе."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="• Ёмкость короба: 12, 10, 5 или 3."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="• Смешанный заказ разрешён."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="• При удалении заказа короба и марки остаются на складе."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="• Перед удалением приложения сохраните резервную копию и код восстановления."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Label Text="Версия 1.0"
+                       Style="{StaticResource BodyLabel}"
+                       Margin="0,18,0,0" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <VerticalStackLayout Grid.Row="3"
+                             Padding="0,4,0,12"
+                             Spacing="8"
+                             BackgroundColor="{StaticResource Background}">
+            <Button Text="0. Назад"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    Margin="7,0"
+                    Command="{Binding BackCommand}" />
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>

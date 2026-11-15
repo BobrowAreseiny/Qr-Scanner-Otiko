@@ -62,6 +62,9 @@ public static class MauiProgram
 		builder.Services.AddTransient<LogsViewModel>();
 		builder.Services.AddTransient<LogsPage>();
 
+		builder.Services.AddTransient<HelpViewModel>();
+		builder.Services.AddTransient<HelpPage>();
+
 		builder.Services.AddTransient<SectionViewModel>();
 		builder.Services.AddTransient<SectionPage>();
 
