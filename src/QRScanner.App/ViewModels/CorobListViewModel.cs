@@ -80,12 +80,14 @@ public sealed partial class CorobListViewModel : ObservableObject
         try
         {
             var items = await _database.GetCorobsAsync();
+            var counts = await _database.GetBarcodeCountsByCorobAsync();
             Corobs.Clear();
 
             foreach (var corob in items)
             {
-                var barcodes = await _database.GetBarcodesAsync(corob.Id);
-                Corobs.Add(new CorobListItem(corob, barcodes.Count));
+                Corobs.Add(new CorobListItem(
+                    corob,
+                    counts.GetValueOrDefault(corob.Id)));
             }
 
             IsEmpty = Corobs.Count == 0;

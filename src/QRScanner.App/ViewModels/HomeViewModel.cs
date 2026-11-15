@@ -21,6 +21,12 @@ public sealed class HomeViewModel : ObservableObject
         OpenShipmentCommand = new AsyncRelayCommand(
             () => _navigation.GoToAsync(nameof(ShipmentPage)));
 
+        OpenHistoryCommand = new AsyncRelayCommand(
+            () => _navigation.GoToAsync(nameof(OrderHistoryPage)));
+
+        OpenSettingsCommand = new AsyncRelayCommand(
+            () => _navigation.GoToAsync(nameof(SettingsPage)));
+
         ShowMenuCommand = new AsyncRelayCommand(ShowMenuAsync);
         ExitCommand = new AsyncRelayCommand(ExitAsync);
     }
@@ -28,6 +34,10 @@ public sealed class HomeViewModel : ObservableObject
     public IAsyncRelayCommand OpenAggregationCommand { get; }
 
     public IAsyncRelayCommand OpenShipmentCommand { get; }
+
+    public IAsyncRelayCommand OpenHistoryCommand { get; }
+
+    public IAsyncRelayCommand OpenSettingsCommand { get; }
 
     public IAsyncRelayCommand ShowMenuCommand { get; }
 
@@ -68,7 +78,7 @@ public sealed class HomeViewModel : ObservableObject
     {
         return _dialogs.ShowAlertAsync(
             "О программе",
-            "Сканер QR\nВерсия 1.0\n.NET 10 / MAUI",
+            "Сканер QR\nВерсия 1.0.0\n.NET 10 / MAUI",
             "OK");
     }
 

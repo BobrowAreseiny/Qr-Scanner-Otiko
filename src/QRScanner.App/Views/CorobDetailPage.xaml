@@ -18,100 +18,106 @@
         <BoxView Grid.Row="1"
                  Style="{StaticResource ThinDivider}" />
 
-        <ScrollView Grid.Row="2" x:Name="ContentScroll">
-            <VerticalStackLayout Padding="16,8,16,12" Spacing="8">
+        <CollectionView Grid.Row="2"
+                        x:Name="MarksList"
+                        ItemsSource="{Binding Barcodes}"
+                        SelectionMode="None"
+                        ItemSizingStrategy="MeasureFirstItem"
+                        VerticalScrollBarVisibility="Never"
+                        Margin="8,0,8,0">
+            <CollectionView.Header>
+                <VerticalStackLayout Padding="8,8,8,8" Spacing="8">
 
-                <Label Text="Название"
-                       Style="{StaticResource SectionHeaderLabel}"
-                       Margin="0,0,0,0" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Label Text="{Binding CorobName}"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               LineBreakMode="WordWrap"
+                               VerticalOptions="Center" />
+                        <Button Grid.Column="1"
+                                Text="Изменить"
+                                Style="{StaticResource SmallButtonStyle}"
+                                HeightRequest="40"
+                                MinimumHeightRequest="40"
+                                Command="{Binding EditNameCommand}" />
+                    </Grid>
 
-                <Border BackgroundColor="{StaticResource Surface}"
-                        Stroke="{StaticResource Border}"
-                        StrokeThickness="1"
-                        StrokeShape="Rectangle"
-                        Padding="8,0">
-                    <Entry Text="{Binding Corob.Name, Mode=TwoWay}"
-                           HeightRequest="44"
-                           Placeholder="Название короба" />
-                </Border>
+                    <Label Text="{Binding CountText}"
+                           Style="{StaticResource BodyLabel}" />
 
-                <Grid ColumnDefinitions="*,Auto">
-                    <Label Text="Ёмкость"
-                           Style="{StaticResource SettingLabel}" />
-                    <Label Grid.Column="1"
-                           Text="{Binding CountText}"
-                           Style="{StaticResource SettingValueLabel}" />
-                </Grid>
+                    <BoxView Style="{StaticResource SettingRowSeparator}" />
 
-                <BoxView Style="{StaticResource SettingRowSeparator}" />
+                    <Label Text="Марки"
+                           Style="{StaticResource SectionHeaderLabel}"
+                           Margin="0,0,0,0" />
 
-                <Label Text="Марки"
-                       Style="{StaticResource SectionHeaderLabel}"
-                       Margin="0,0,0,0" />
+                    <Label Text="{Binding StatusMessage}"
+                           Style="{StaticResource BodyLabel}" />
 
-                <Label Text="{Binding StatusMessage}"
-                       Style="{StaticResource BodyLabel}" />
-
-                <Button Text="Войти в настройки"
-                        Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="48"
-                        Margin="0,6,0,0"
-                        IsVisible="{Binding IsAuthRequired}"
-                        Command="{Binding OpenSettingsCommand}" />
-
-                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Barcodes}"
-                                     Spacing="0">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate>
-                            <Border Style="{StaticResource CardStyle}">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-
-                                    <VerticalStackLayout Spacing="2">
-                                        <Label Text="{Binding DisplayTitle}"
-                                               Style="{StaticResource ListNameLabel}" />
-                                        <Label Text="{Binding ProductDetails}"
-                                               Style="{StaticResource ListMetaLabel}" />
-                                    </VerticalStackLayout>
-
-                                    <Button Grid.Column="1"
-                                            Text="✕"
-                                            WidthRequest="48"
-                                            MinimumWidthRequest="48"
-                                            FontSize="22"
-                                            Style="{StaticResource SmallDangerButtonStyle}"
-                                            SemanticProperties.Description="Удалить марку"
-                                            Command="{Binding Path=BindingContext.DeleteBarcodeCommand, Source={x:Reference Root}}"
-                                            CommandParameter="{Binding}" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
+                    <Button Text="Войти в настройки"
+                            Style="{StaticResource MenuButtonStyle}"
+                            HeightRequest="48"
+                            Margin="0,6,0,0"
+                            IsVisible="{Binding IsAuthRequired}"
+                            Command="{Binding OpenSettingsCommand}" />
                 </VerticalStackLayout>
+            </CollectionView.Header>
 
-            </VerticalStackLayout>
-        </ScrollView>
+            <CollectionView.EmptyView>
+                <Label Text="Марок пока нет."
+                       Style="{StaticResource BodyLabel}"
+                       Margin="8,24,8,8" />
+            </CollectionView.EmptyView>
 
-        <VerticalStackLayout Grid.Row="3"
-                             Padding="0,4,0,12"
-                             Spacing="8"
-                             BackgroundColor="{StaticResource Background}">
-            <Button Text="1. Сохранить"
-                    Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="52"
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource CardStyle}"
+                            Margin="0,0,0,10">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="{Binding DisplayTitle}"
+                                       Style="{StaticResource ListNameLabel}" />
+                                <Label Text="{Binding ProductDetails}"
+                                       Style="{StaticResource ListMetaLabel}"
+                                       MaxLines="1"
+                                       LineBreakMode="TailTruncation" />
+                            </VerticalStackLayout>
+
+                            <Button Grid.Column="1"
+                                    Text="✕"
+                                    WidthRequest="48"
+                                    MinimumWidthRequest="48"
+                                    FontSize="22"
+                                    Style="{StaticResource SmallDangerButtonStyle}"
+                                    SemanticProperties.Description="Удалить марку"
+                                    Command="{Binding Path=BindingContext.DeleteBarcodeCommand, Source={x:Reference Root}}"
+                                    CommandParameter="{Binding}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Grid Grid.Row="3"
+              Padding="8,4,8,12"
+              ColumnDefinitions="*,*,*"
+              ColumnSpacing="8"
+              BackgroundColor="{StaticResource Background}">
+            <Button Text="Сохранить"
+                    Style="{StaticResource CompactMenuButtonStyle}"
                     Command="{Binding SaveCommand}" />
 
-            <Button Text="2. QR"
-                    Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="52"
-                    Margin="7,0"
+            <Button Grid.Column="1"
+                    Text="QR"
+                    Style="{StaticResource CompactMenuButtonStyle}"
                     Command="{Binding QrMenuCommand}" />
 
-            <Button Text="0. Назад"
-                    Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="52"
-                    Margin="7,0"
+            <Button Grid.Column="2"
+                    Text="Назад"
+                    Style="{StaticResource CompactMenuButtonStyle}"
                     Command="{Binding BackCommand}" />
-        </VerticalStackLayout>
+        </Grid>
 
     </Grid>
 

@@ -9,12 +9,20 @@ public partial class App : Application
 {
     private readonly IServiceProvider _services;
     private readonly ILogger<App> _logger;
+    private readonly IApiSettingsService _apiSettings;
+    private readonly IDatamarkApiClient _apiClient;
 
-    public App(IServiceProvider services, ILogger<App> logger)
+    public App(
+        IServiceProvider services,
+        ILogger<App> logger,
+        IApiSettingsService apiSettings,
+        IDatamarkApiClient apiClient)
     {
         InitializeComponent();
         _services = services;
         _logger = logger;
+        _apiSettings = apiSettings;
+        _apiClient = apiClient;
 
         _logger.LogInformation("Запуск приложения «Сканер QR»");
 
@@ -55,6 +63,29 @@ public partial class App : Application
         {
             System.Diagnostics.Debug.WriteLine($"Ошибка резервного копирования базы данных: {ex}");
             Console.WriteLine($"QRSCANNER_BACKUP_ERROR: {ex.Message}");
+        }
+
+        await TryAutoLoginAsync();
+    }
+
+    private async Task TryAutoLoginAsync()
+    {
+        try
+        {
+            var settings = await _apiSettings.LoadAsync();
+            if (!settings.HasCredentials)
+            {
+                return;
+            }
+
+            var ok = await _apiClient.TestConnectionAsync(settings);
+            _logger.LogInformation(
+                "Автоматическая авторизация Datamark: {Result}",
+                ok ? "успешно" : "не удалось");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Не удалось автоматически авторизоваться в Datamark");
         }
     }
 

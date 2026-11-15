@@ -15,5 +15,6 @@ public interface IDialogService
     Task<string?> ShowPromptAsync(
         string title,
         string message,
-        string placeholder);
+        string placeholder,
+        string? initialValue = null);
 }

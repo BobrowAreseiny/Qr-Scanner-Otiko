@@ -31,8 +31,10 @@ public class BarcodeParserTests
 
     [Theory]
     [InlineData("è010460000000000121ABC", "010460000000000121ABC")]
+    [InlineData("е010460000000000121ABC", "010460000000000121ABC")]
     [InlineData("010460000000000121ABC", "010460000000000121ABC")]
     [InlineData("  è0104600000000001  ", "0104600000000001")]
+    [InlineData("0104600000000001\u001d910005\u001d92ABC", "0104600000000001\u001d910005\u001d92ABC")]
     [InlineData(null, "")]
     public void Cleans_marking_code_for_export(string? code, string expected)
     {

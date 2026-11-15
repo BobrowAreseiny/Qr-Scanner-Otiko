@@ -16,6 +16,8 @@ public interface IDatabaseService
 
     Task<IReadOnlyList<CorobEntity>> GetCorobsAsync();
 
+    Task<IReadOnlyDictionary<int, int>> GetBarcodeCountsByCorobAsync();
+
     Task<CorobEntity?> GetCorobAsync(int id);
 
     Task<IReadOnlyList<BoxBarcodeEntity>> GetBarcodesAsync(int corobId);
@@ -180,6 +182,15 @@ public sealed class DatabaseService : IDatabaseService
             result.Error);
 
         return result;
+    }
+
+    public async Task<IReadOnlyDictionary<int, int>> GetBarcodeCountsByCorobAsync()
+    {
+        var connection = await GetConnectionAsync();
+        var rows = await connection.QueryAsync<CorobBarcodeCount>(
+            "SELECT CorobId, COUNT(*) AS Count FROM BoxBarcode GROUP BY CorobId");
+
+        return rows.ToDictionary(row => row.CorobId, row => row.Count);
     }
 
     public async Task<CorobEntity?> GetCorobAsync(int id)
@@ -581,4 +592,11 @@ public sealed class DatabaseService : IDatabaseService
         await InitializeAsync();
         return _connection ?? throw new InvalidOperationException("База данных не инициализирована.");
     }
+}
+
+public sealed class CorobBarcodeCount
+{
+    public int CorobId { get; set; }
+
+    public int Count { get; set; }
 }

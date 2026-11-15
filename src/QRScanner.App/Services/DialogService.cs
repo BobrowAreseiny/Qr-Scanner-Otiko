@@ -24,7 +24,8 @@ public sealed class DialogService : IDialogService
     public Task<string?> ShowPromptAsync(
         string title,
         string message,
-        string placeholder)
+        string placeholder,
+        string? initialValue = null)
     {
         return Shell.Current.DisplayPromptAsync(
             title,
@@ -32,6 +33,7 @@ public sealed class DialogService : IDialogService
             "OK",
             "Отмена",
             placeholder,
+            initialValue: initialValue,
             keyboard: Keyboard.Text);
     }
 }

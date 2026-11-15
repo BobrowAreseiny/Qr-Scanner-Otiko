@@ -45,6 +45,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         ShareQrCommand = new AsyncRelayCommand(ShareQrAsync);
         SaveQrToFileCommand = new AsyncRelayCommand(SaveQrToFileAsync);
         QrMenuCommand = new AsyncRelayCommand(ShowQrMenuAsync);
+        EditNameCommand = new AsyncRelayCommand(EditNameAsync);
     }
 
     public ObservableCollection<BoxBarcodeEntity> Barcodes { get; } = new();
@@ -63,6 +64,8 @@ public sealed partial class CorobDetailViewModel : ObservableObject
 
     public IAsyncRelayCommand QrMenuCommand { get; }
 
+    public IAsyncRelayCommand EditNameCommand { get; }
+
     [ObservableProperty]
     private CorobEntity? corob;
 
@@ -71,6 +74,9 @@ public sealed partial class CorobDetailViewModel : ObservableObject
 
     [ObservableProperty]
     private string title = "Короб";
+
+    [ObservableProperty]
+    private string corobName = string.Empty;
 
     [ObservableProperty]
     private string countText = "0 / 0";
@@ -90,6 +96,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
 
         Corob = corob;
         Title = corob.Name;
+        CorobName = corob.Name;
         Barcodes.Clear();
 
         var barcodes = await _database.GetBarcodesAsync(corob.Id);
@@ -205,6 +212,39 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             : $"Товар: {vendorCode} {size}".Trim();
     }
 
+    private async Task EditNameAsync()
+    {
+        if (Corob is null)
+        {
+            return;
+        }
+
+        var name = await _dialogs.ShowPromptAsync(
+            "Название короба",
+            "Введите название короба.",
+            "Название",
+            Corob.Name);
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return;
+        }
+
+        try
+        {
+            var trimmed = name.Trim();
+            Corob.Name = trimmed;
+            CorobName = trimmed;
+            Title = trimmed;
+            await _database.SaveCorobAsync(Corob);
+            StatusMessage = "Название сохранено.";
+        }
+        catch (Exception ex)
+        {
+            await _dialogs.ShowAlertAsync("Ошибка", $"Не удалось сохранить название: {ex.Message}");
+        }
+    }
+
     private async Task SaveAsync()
     {
         if (Corob is null)
@@ -253,7 +293,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             await Share.Default.RequestAsync(new ShareFileRequest
             {
                 Title = $"QR-код короба {Corob.Name}",
-                File = new ShareFile(path)
+                File = new ShareFile(path, "image/png")
             });
 
             StatusMessage = "QR-код готов.";
@@ -322,6 +362,11 @@ public sealed partial class CorobDetailViewModel : ObservableObject
     {
         var invalid = Path.GetInvalidFileNameChars();
         var safe = new string(name.Select(c => invalid.Contains(c) ? '_' : c).ToArray()).Trim();
+        if (safe.Length > 48)
+        {
+            safe = safe[..48].Trim();
+        }
+
         return string.IsNullOrWhiteSpace(safe) ? "Короб" : safe;
     }
 

@@ -14,7 +14,7 @@ public static class BarcodeParser
     public static string CleanForExport(string? code)
     {
         var normalized = Normalize(code);
-        if (normalized.StartsWith('è'))
+        if (normalized.Length > 0 && (normalized[0] == 'è' || normalized[0] == 'е'))
         {
             normalized = normalized[1..];
         }

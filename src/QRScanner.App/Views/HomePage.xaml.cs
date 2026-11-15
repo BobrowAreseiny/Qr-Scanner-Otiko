@@ -38,6 +38,12 @@ public partial class HomePage : ContentPage
             case 2:
                 _viewModel.OpenShipmentCommand.Execute(null);
                 break;
+            case 3:
+                _viewModel.OpenHistoryCommand.Execute(null);
+                break;
+            case 4:
+                _viewModel.OpenSettingsCommand.Execute(null);
+                break;
             case 0:
                 _viewModel.ExitCommand.Execute(null);
                 break;

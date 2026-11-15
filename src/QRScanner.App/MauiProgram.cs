@@ -13,6 +13,19 @@ public static class MauiProgram
 	{
 		var builder = MauiApp.CreateBuilder();
 
+#if ANDROID
+		Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping(
+			"StrictEntry",
+			(handler, view) =>
+			{
+				if (handler.PlatformView is Android.Widget.EditText native)
+				{
+					native.Background = null;
+					native.SetPadding(0, 0, 0, 0);
+				}
+			});
+#endif
+
 		builder.Logging.AddProvider(
 			new FileLoggerProvider(() => Path.Combine(FileSystem.AppDataDirectory, "Logs")));
 		builder.Logging.SetMinimumLevel(LogLevel.Information);

@@ -6,11 +6,16 @@
              HeightRequest="40">
 
     <Grid BackgroundColor="{StaticResource Primary}"
-          ColumnDefinitions="40,*,40"
+          ColumnDefinitions="Auto,*,40"
           Padding="0">
 
-        <Label Text="←"
-               Style="{StaticResource ToolbarIconLabel}"
+        <Label Text="Назад"
+               WidthRequest="84"
+               FontSize="18"
+               FontAttributes="Bold"
+               TextColor="{StaticResource White}"
+               HorizontalTextAlignment="Center"
+               VerticalOptions="Center"
                SemanticProperties.Description="Назад"
                IsVisible="{Binding ShowBack, Source={x:Reference Root}}">
             <Label.GestureRecognizers>
