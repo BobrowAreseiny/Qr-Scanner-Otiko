@@ -39,6 +39,8 @@ public interface IDatabaseService
 
     Task DeleteOrderAsync(int id);
 
+    Task DeleteOrderLineAsync(int id);
+
     Task<CorobEntity> SaveCorobAsync(CorobEntity corob);
 
     Task<BoxBarcodeEntity> SaveBarcodeAsync(BoxBarcodeEntity barcode);
@@ -275,6 +277,12 @@ public sealed class DatabaseService : IDatabaseService
         var connection = await GetConnectionAsync();
         await connection.ExecuteAsync("DELETE FROM OrderLine WHERE OrderId = ?", id);
         await connection.DeleteAsync<OrderEntity>(id);
+    }
+
+    public async Task DeleteOrderLineAsync(int id)
+    {
+        var connection = await GetConnectionAsync();
+        await connection.DeleteAsync<OrderLineEntity>(id);
     }
 
     public async Task<CorobEntity> SaveCorobAsync(CorobEntity corob)

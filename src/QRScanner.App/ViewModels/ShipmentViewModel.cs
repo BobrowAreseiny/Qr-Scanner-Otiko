@@ -13,20 +13,16 @@ public sealed class ShipmentViewModel : ObservableObject
     {
         _navigation = navigation;
 
-        OpenOrderCommand = new AsyncRelayCommand(() => OpenSectionAsync("Новый заказ"));
-        OpenInfoCommand = new AsyncRelayCommand(() => OpenSectionAsync("Информация"));
+        OpenOrderCommand = new AsyncRelayCommand(
+            () => _navigation.GoToAsync(nameof(OrderPage)));
+        OpenHistoryCommand = new AsyncRelayCommand(
+            () => _navigation.GoToAsync(nameof(OrderHistoryPage)));
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
     }
 
     public IAsyncRelayCommand OpenOrderCommand { get; }
 
-    public IAsyncRelayCommand OpenInfoCommand { get; }
+    public IAsyncRelayCommand OpenHistoryCommand { get; }
 
     public IAsyncRelayCommand BackCommand { get; }
-
-    private Task OpenSectionAsync(string title)
-    {
-        var route = $"{nameof(SectionPage)}?section={Uri.EscapeDataString(title)}";
-        return _navigation.GoToAsync(route);
-    }
 }

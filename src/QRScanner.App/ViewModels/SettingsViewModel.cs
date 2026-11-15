@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QRScanner.App.Services;
+using QRScanner.App.Views;
 
 namespace QRScanner.App.ViewModels;
 
@@ -26,6 +27,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         TestCommand = new AsyncRelayCommand(TestAsync);
         ShowAboutCommand = new AsyncRelayCommand(ShowAboutAsync);
+        OpenOneCSettingsCommand = new AsyncRelayCommand(
+            () => _navigation.GoToAsync(nameof(OneCSettingsPage)));
     }
 
     [ObservableProperty]
@@ -50,6 +53,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     public IAsyncRelayCommand TestCommand { get; }
 
     public IAsyncRelayCommand ShowAboutCommand { get; }
+
+    public IAsyncRelayCommand OpenOneCSettingsCommand { get; }
 
     public async Task LoadAsync()
     {

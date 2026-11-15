@@ -1,3 +1,6 @@
+using Android.Content;
+using Android.Views.InputMethods;
+using Microsoft.Maui.ApplicationModel;
 using QRScanner.App.Services;
 using QRScanner.App.ViewModels;
 
@@ -26,7 +29,25 @@ public partial class SettingsPage : ContentPage
     protected override void OnDisappearing()
     {
         _keyboard.ShortcutPressed -= OnShortcut;
+        HideKeyboard();
         base.OnDisappearing();
+    }
+
+    private static void HideKeyboard()
+    {
+        var activity = Platform.CurrentActivity;
+        var focus = activity?.CurrentFocus;
+
+        if (activity is null || focus is null)
+        {
+            return;
+        }
+
+        var manager = (InputMethodManager?)activity.GetSystemService(
+            Context.InputMethodService);
+
+        manager?.HideSoftInputFromWindow(focus.WindowToken, 0);
+        focus.ClearFocus();
     }
 
     private void OnShortcut(int digit)

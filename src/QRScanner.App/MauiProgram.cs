@@ -25,6 +25,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IScannerService, ScannerService>();
 		builder.Services.AddSingleton<IApiSettingsService, SecureStorageApiSettingsService>();
 		builder.Services.AddSingleton<IDatamarkApiClient, DatamarkApiClient>();
+		builder.Services.AddSingleton<IOneCSettingsService, SecureStorageOneCSettingsService>();
+		builder.Services.AddSingleton<IOneCApiClient, OneCApiClient>();
 
 		builder.Services.AddSingleton<IDbKeyProvider, SecureStorageDbKeyProvider>();
 		builder.Services.AddSingleton<LegacyDatabaseImporter>();
@@ -45,11 +47,23 @@ public static class MauiProgram
 		builder.Services.AddTransient<CorobDetailViewModel>();
 		builder.Services.AddTransient<CorobDetailPage>();
 
+		builder.Services.AddTransient<OrderViewModel>();
+		builder.Services.AddTransient<OrderPage>();
+
+		builder.Services.AddTransient<OrderHistoryViewModel>();
+		builder.Services.AddTransient<OrderHistoryPage>();
+
+		builder.Services.AddTransient<OrderHistoryDetailViewModel>();
+		builder.Services.AddTransient<OrderHistoryDetailPage>();
+
 		builder.Services.AddTransient<ShipmentViewModel>();
 		builder.Services.AddTransient<ShipmentPage>();
 
 		builder.Services.AddTransient<SettingsViewModel>();
 		builder.Services.AddTransient<SettingsPage>();
+
+		builder.Services.AddTransient<OneCSettingsViewModel>();
+		builder.Services.AddTransient<OneCSettingsPage>();
 
 		builder.Services.AddTransient<SectionViewModel>();
 		builder.Services.AddTransient<SectionPage>();

@@ -19,9 +19,9 @@
                         Style="{StaticResource MenuButtonStyle}"
                         Command="{Binding OpenOrderCommand}" />
 
-                <Button Text="2. Информация"
+                <Button Text="2. История заказов"
                         Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding OpenInfoCommand}" />
+                        Command="{Binding OpenHistoryCommand}" />
 
                 <BoxView Style="{StaticResource ThinDivider}"
                          Margin="0,7,0,0" />
