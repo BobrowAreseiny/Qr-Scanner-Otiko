@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using QRScanner.App.Data;
 
 namespace QRScanner.App;
@@ -6,11 +7,19 @@ namespace QRScanner.App;
 public partial class App : Application
 {
     private readonly IServiceProvider _services;
+    private readonly ILogger<App> _logger;
 
-    public App(IServiceProvider services)
+    public App(IServiceProvider services, ILogger<App> logger)
     {
         InitializeComponent();
         _services = services;
+        _logger = logger;
+
+        _logger.LogInformation("Запуск приложения «Сканер QR»");
+
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
         _ = InitializeDatabaseAsync();
     }
 
@@ -27,8 +36,24 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Ошибка инициализации базы данных");
             System.Diagnostics.Debug.WriteLine($"Ошибка инициализации базы данных: {ex}");
             Console.WriteLine($"QRSCANNER_DB_ERROR: {ex}");
         }
+    }
+
+    private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        _logger.LogCritical(
+            e.ExceptionObject as Exception,
+            "Необработанное исключение приложения");
+    }
+
+    private void OnUnobservedTaskException(
+        object? sender,
+        UnobservedTaskExceptionEventArgs e)
+    {
+        _logger.LogError(e.Exception, "Необработанная ошибка задачи");
+        e.SetObserved();
     }
 }
