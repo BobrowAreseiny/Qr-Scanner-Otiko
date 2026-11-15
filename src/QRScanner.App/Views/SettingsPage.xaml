@@ -54,10 +54,16 @@
                            Placeholder="Пароль Электронного знака" />
                 </Border>
 
+                <Button Text="Импорт из credentials.txt"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="36"
+                        Margin="0,4,0,0"
+                        Command="{Binding ImportCredentialsCommand}" />
+
                 <Button Text="Проверить подключение"
                         Style="{StaticResource MenuButtonStyle}"
                         HeightRequest="40"
-                        Margin="0,4,0,0"
+                        Margin="0,8,0,0"
                         Command="{Binding TestCommand}" />
 
                 <Button Text="Сохранить"
@@ -79,6 +85,14 @@
                        Margin="0,6,0,0" />
 
                 <Label Text="Требования к паролю: не менее 8 символов, заглавная латинская буква, цифра и спецсимвол."
+                       Style="{StaticResource BodyLabel}"
+                       Margin="0,4,0,0" />
+
+                <Label Text="Пробелы в начале и конце логина и пароля игнорируются."
+                       Style="{StaticResource BodyLabel}"
+                       Margin="0,4,0,0" />
+
+                <Label Text="Файл credentials.txt: Android/data/&lt;package&gt;/files/credentials.txt"
                        Style="{StaticResource BodyLabel}"
                        Margin="0,4,0,0" />
 

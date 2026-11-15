@@ -161,7 +161,7 @@ public sealed class DatamarkApiClient : IDatamarkApiClient
         using var content = new MultipartFormDataContent
         {
             { new StringContent(settings.Login.Trim()), "username" },
-            { new StringContent(settings.Password), "password" }
+            { new StringContent(settings.Password.Trim()), "password" }
         };
 
         using var response = await _httpClient.PostAsync(uri, content, cancellationToken);
