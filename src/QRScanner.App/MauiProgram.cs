@@ -29,13 +29,14 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IOneCSettingsService, SecureStorageOneCSettingsService>();
 		builder.Services.AddSingleton<IOneCApiClient, OneCApiClient>();
 		builder.Services.AddSingleton<IQrCodeService, QrCodeService>();
-		builder.Services.AddSingleton<FileSaveService>();
-		builder.Services.AddSingleton<IFileSaveService>(
-			services => services.GetRequiredService<FileSaveService>());
 
 		builder.Services.AddSingleton<IDbKeyProvider, SecureStorageDbKeyProvider>();
 		builder.Services.AddSingleton<LegacyDatabaseImporter>();
 		builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
+		builder.Services.AddSingleton<IDatabaseBackupService, DatabaseBackupService>();
+		builder.Services.AddSingleton<FileTransferService>();
+		builder.Services.AddSingleton<IFileTransferService>(
+			services => services.GetRequiredService<FileTransferService>());
 
 		builder.Services.AddSingleton<HomeViewModel>();
 		builder.Services.AddSingleton<HomePage>();

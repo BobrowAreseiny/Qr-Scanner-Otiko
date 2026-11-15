@@ -18,7 +18,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
     private readonly IApiSettingsService _apiSettings;
     private readonly IDatamarkApiClient _apiClient;
     private readonly IQrCodeService _qrCodeService;
-    private readonly IFileSaveService _fileSaveService;
+    private readonly IFileTransferService _fileTransferService;
 
     public CorobDetailViewModel(
         IDatabaseService database,
@@ -27,7 +27,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         IApiSettingsService apiSettings,
         IDatamarkApiClient apiClient,
         IQrCodeService qrCodeService,
-        IFileSaveService fileSaveService)
+        IFileTransferService fileTransferService)
     {
         _database = database;
         _navigation = navigation;
@@ -35,7 +35,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         _apiSettings = apiSettings;
         _apiClient = apiClient;
         _qrCodeService = qrCodeService;
-        _fileSaveService = fileSaveService;
+        _fileTransferService = fileTransferService;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
@@ -302,7 +302,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             var path = await _qrCodeService.GenerateAsync(Corob.Id, Corob.Name);
 
             StatusMessage = "Выберите папку для сохранения...";
-            var saved = await _fileSaveService.SaveAsync(
+            var saved = await _fileTransferService.SaveAsync(
                 path,
                 $"{SafeFileName(Corob.Name)}.png",
                 "image/png");

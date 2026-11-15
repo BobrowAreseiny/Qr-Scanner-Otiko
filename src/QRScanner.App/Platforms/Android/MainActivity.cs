@@ -18,14 +18,14 @@ public class MainActivity : MauiAppCompatActivity
 
     private ScannerBroadcastReceiver? _scannerReceiver;
     private bool _receiverRegistered;
-    private FileSaveService? _fileSaveService;
+    private FileTransferService? _fileTransferService;
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
 
-        _fileSaveService = IPlatformApplication.Current?.Services
-            .GetService<FileSaveService>();
+        _fileTransferService = IPlatformApplication.Current?.Services
+            .GetService<FileTransferService>();
 
         Window?.AddFlags(WindowManagerFlags.DrawsSystemBarBackgrounds);
         Window?.SetStatusBarColor(Android.Graphics.Color.ParseColor("#172554"));
@@ -85,7 +85,7 @@ public class MainActivity : MauiAppCompatActivity
     protected override void OnActivityResult(int requestCode, Result resultCode, Intent? data)
     {
         base.OnActivityResult(requestCode, resultCode, data);
-        _fileSaveService?.HandleActivityResult(requestCode, resultCode, data);
+        _fileTransferService?.HandleActivityResult(requestCode, resultCode, data);
     }
 
     public override bool OnKeyDown(Keycode keyCode, KeyEvent? e)

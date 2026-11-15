@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using QRScanner.App.Data.Entities;
 using QRScanner.Core;
+using QRScanner.Core.Security;
 using SQLite;
 
 namespace QRScanner.App.Data;
@@ -40,6 +41,16 @@ public interface IDatabaseService
     Task DeleteOrderAsync(int id);
 
     Task DeleteOrderLineAsync(int id);
+
+    Task<bool> VerifyKeyAsync(string key);
+
+    Task<bool> VerifyKeyForFileAsync(string filePath, string key);
+
+    Task<bool> ApplyRecoveryKeyAsync(string key);
+
+    Task CreateSnapshotAsync(string destinationPath);
+
+    Task<bool> RestoreAsync(string backupPath, string key);
 
     Task<CorobEntity> SaveCorobAsync(CorobEntity corob);
 
@@ -283,6 +294,199 @@ public sealed class DatabaseService : IDatabaseService
     {
         var connection = await GetConnectionAsync();
         await connection.DeleteAsync<OrderLineEntity>(id);
+    }
+
+    public Task<bool> VerifyKeyAsync(string key)
+    {
+        return VerifyKeyForFileAsync(DatabasePath, key);
+    }
+
+    public async Task<bool> VerifyKeyForFileAsync(string filePath, string key)
+    {
+        if (!DatabaseKey.IsValid(key) || !File.Exists(filePath))
+        {
+            return false;
+        }
+
+        SQLiteAsyncConnection? probe = null;
+
+        try
+        {
+            var connectionString = new SQLiteConnectionString(
+                filePath,
+                storeDateTimeAsTicks: true,
+                key: DatabaseKey.Normalize(key),
+                openFlags: SQLiteOpenFlags.ReadOnly);
+
+            probe = new SQLiteAsyncConnection(connectionString);
+            await probe.ExecuteScalarAsync<int>("SELECT count(*) FROM sqlite_master;");
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+        finally
+        {
+            if (probe is not null)
+            {
+                try
+                {
+                    await probe.CloseAsync();
+                }
+                catch
+                {
+                    // Соединение уже закрыто или недоступно.
+                }
+            }
+        }
+    }
+
+    public async Task<bool> ApplyRecoveryKeyAsync(string key)
+    {
+        if (!await VerifyKeyAsync(key))
+        {
+            return false;
+        }
+
+        await _keyProvider.SetKeyAsync(DatabaseKey.Normalize(key));
+        await ReinitializeAsync();
+        return true;
+    }
+
+    public async Task CreateSnapshotAsync(string destinationPath)
+    {
+        await InitializeAsync();
+
+        await _initGate.WaitAsync();
+        try
+        {
+            if (_connection is not null)
+            {
+                await _connection.CloseAsync();
+            }
+
+            _connection = null;
+            _initialized = false;
+
+            File.Copy(DatabasePath, destinationPath, overwrite: true);
+        }
+        finally
+        {
+            _initGate.Release();
+        }
+
+        await InitializeAsync();
+    }
+
+    public async Task<bool> RestoreAsync(string backupPath, string key)
+    {
+        if (!await VerifyKeyForFileAsync(backupPath, key))
+        {
+            return false;
+        }
+
+        var normalizedKey = DatabaseKey.Normalize(key);
+        var safetyPath = DatabasePath + ".before-restore";
+
+        await _initGate.WaitAsync();
+        try
+        {
+            if (_connection is not null)
+            {
+                await _connection.CloseAsync();
+            }
+
+            _connection = null;
+            _initialized = false;
+
+            if (File.Exists(DatabasePath))
+            {
+                File.Copy(DatabasePath, safetyPath, overwrite: true);
+            }
+
+            File.Copy(backupPath, DatabasePath, overwrite: true);
+            DeleteSidecarFiles();
+            await _keyProvider.SetKeyAsync(normalizedKey);
+        }
+        catch
+        {
+            if (File.Exists(safetyPath))
+            {
+                File.Copy(safetyPath, DatabasePath, overwrite: true);
+                DeleteSidecarFiles();
+            }
+
+            throw;
+        }
+        finally
+        {
+            _initGate.Release();
+        }
+
+        try
+        {
+            await InitializeAsync();
+            return true;
+        }
+        catch
+        {
+            await RestoreSafetyCopyAsync(safetyPath);
+            throw;
+        }
+    }
+
+    private async Task ReinitializeAsync()
+    {
+        if (_connection is not null)
+        {
+            await _connection.CloseAsync();
+        }
+
+        _connection = null;
+        _initialized = false;
+        await InitializeAsync();
+    }
+
+    private async Task RestoreSafetyCopyAsync(string safetyPath)
+    {
+        if (!File.Exists(safetyPath))
+        {
+            return;
+        }
+
+        await _initGate.WaitAsync();
+        try
+        {
+            if (_connection is not null)
+            {
+                await _connection.CloseAsync();
+            }
+
+            _connection = null;
+            _initialized = false;
+
+            File.Copy(safetyPath, DatabasePath, overwrite: true);
+            DeleteSidecarFiles();
+        }
+        finally
+        {
+            _initGate.Release();
+        }
+
+        await InitializeAsync();
+    }
+
+    private void DeleteSidecarFiles()
+    {
+        foreach (var suffix in new[] { "-wal", "-shm" })
+        {
+            var path = DatabasePath + suffix;
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
     }
 
     public async Task<CorobEntity> SaveCorobAsync(CorobEntity corob)

@@ -20,4 +20,18 @@ public sealed class DialogService : IDialogService
     {
         return Shell.Current.DisplayActionSheetAsync(title, cancel, null, buttons);
     }
+
+    public Task<string?> ShowPromptAsync(
+        string title,
+        string message,
+        string placeholder)
+    {
+        return Shell.Current.DisplayPromptAsync(
+            title,
+            message,
+            "OK",
+            "Отмена",
+            placeholder,
+            keyboard: Keyboard.Text);
+    }
 }
