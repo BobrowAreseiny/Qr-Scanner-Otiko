@@ -39,6 +39,7 @@ public sealed class HomeViewModel : ObservableObject
             "Меню",
             "Отмена",
             "Настройки",
+            "Логи",
             "О программе",
             "Выход");
 
@@ -46,6 +47,9 @@ public sealed class HomeViewModel : ObservableObject
         {
             case "Настройки":
                 await _navigation.GoToAsync(nameof(SettingsPage));
+                break;
+            case "Логи":
+                await _navigation.GoToAsync(nameof(LogsPage));
                 break;
             case "О программе":
                 await ShowAboutAsync();

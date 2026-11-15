@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:QRScanner.App.Controls"
+             x:Class="QRScanner.App.Views.LogsPage"
+             Title="Логи"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="40,3,*,Auto"
+          BackgroundColor="{StaticResource Background}">
+
+        <controls:AppToolbar Grid.Row="0"
+                             Title="Логи"
+                             ShowBack="True"
+                             BackCommand="{Binding BackCommand}" />
+
+        <BoxView Grid.Row="1"
+                 Style="{StaticResource ThinDivider}" />
+
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16,8,16,24" Spacing="0">
+
+                <Label Text="ФАЙЛЫ ЛОГОВ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Files}"
+                                     Spacing="0">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource CardStyle}">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="{Binding FileName}"
+                                               Style="{StaticResource ListNameLabel}" />
+                                        <Label Text="{Binding DateText}"
+                                               Style="{StaticResource ListMetaLabel}" />
+                                    </VerticalStackLayout>
+                                    <Label Grid.Column="1"
+                                           Text="{Binding SizeText}"
+                                           Style="{StaticResource ListMetaLabel}"
+                                           VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label Text="ПОСЛЕДНИЙ ЛОГ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+
+                <Border Style="{StaticResource CardStyle}"
+                        Padding="8">
+                    <Editor Text="{Binding LatestLogText}"
+                            IsReadOnly="True"
+                            HeightRequest="300"
+                            FontSize="10"
+                            AutoSize="Disabled" />
+                </Border>
+
+                <Label Text="{Binding StatusMessage}"
+                       Style="{StaticResource BodyLabel}"
+                       Margin="0,4,0,0" />
+
+                <Button Text="Поделиться логами"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,10,0,0"
+                        Command="{Binding ShareCommand}" />
+
+                <Button Text="Обновить"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,8,0,0"
+                        Command="{Binding RefreshCommand}" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <VerticalStackLayout Grid.Row="3"
+                             Padding="0,4,0,12"
+                             Spacing="8"
+                             BackgroundColor="{StaticResource Background}">
+            <Button Text="0. Назад"
+                    Style="{StaticResource MenuButtonStyle}"
+                    HeightRequest="40"
+                    Margin="7,0"
+                    Command="{Binding BackCommand}" />
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>

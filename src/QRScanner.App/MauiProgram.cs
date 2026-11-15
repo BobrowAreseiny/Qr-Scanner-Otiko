@@ -12,6 +12,13 @@ public static class MauiProgram
 	public static MauiApp CreateMauiApp()
 	{
 		var builder = MauiApp.CreateBuilder();
+
+		builder.Logging.AddProvider(
+			new FileLoggerProvider(() => Path.Combine(FileSystem.AppDataDirectory, "Logs")));
+		builder.Logging.SetMinimumLevel(LogLevel.Information);
+		builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
+		builder.Logging.AddFilter("System", LogLevel.Warning);
+
 		builder
 			.UseMauiApp<App>()
 			.ConfigureFonts(fonts =>
@@ -37,6 +44,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<FileTransferService>();
 		builder.Services.AddSingleton<IFileTransferService>(
 			services => services.GetRequiredService<FileTransferService>());
+		builder.Services.AddSingleton<ILogService, LogService>();
 
 		builder.Services.AddSingleton<HomeViewModel>();
 		builder.Services.AddSingleton<HomePage>();
@@ -76,6 +84,9 @@ public static class MauiProgram
 
 		builder.Services.AddTransient<OneCSettingsViewModel>();
 		builder.Services.AddTransient<OneCSettingsPage>();
+
+		builder.Services.AddTransient<LogsViewModel>();
+		builder.Services.AddTransient<LogsPage>();
 
 		builder.Services.AddTransient<SectionViewModel>();
 		builder.Services.AddTransient<SectionPage>();
