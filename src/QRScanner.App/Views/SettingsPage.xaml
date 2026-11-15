@@ -78,6 +78,10 @@
                        Style="{StaticResource BodyLabel}"
                        Margin="0,6,0,0" />
 
+                <Label Text="Пробелы в начале и конце логина и пароля игнорируются."
+                       Style="{StaticResource BodyLabel}"
+                       Margin="0,4,0,0" />
+
                 <Label Text="Требования к паролю: не менее 8 символов, заглавная латинская буква, цифра и спецсимвол."
                        Style="{StaticResource BodyLabel}"
                        Margin="0,4,0,0" />
