@@ -5,6 +5,7 @@
 
 Текущее состояние, решения и план — [docs/PROJECT-STATE.md](docs/PROJECT-STATE.md).
 Сборка, архитектура и правила разработки — [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+Release-сборка, подпись и перенос старой базы — [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Реализованный функционал
 
@@ -94,7 +95,7 @@ tests/QRScanner.Core.Tests/
 
 ## Статус
 
-Все перечисленные функции собраны в `integration/v1` (`5847459`), но ещё не слиты в `main`:
+Все перечисленные функции собраны в `integration/v1` (`470d853`), но ещё не слиты в `main`:
 
 - отгрузка и экспорт `.txt` — `feature/shipment-order-export`;
 - QR-код короба, «Поделиться» и сохранение в файл — `feature/qr-share`;
@@ -107,12 +108,13 @@ tests/QRScanner.Core.Tests/
 - проверка GTIN и карточка товара — `feature/gtin-check`;
 - запрет добавления марки без авторизации — `fix/offline-auth`;
 - справка — `feature/help`;
-- CI: сборка Android и тесты — `.github/workflows/android.yml`.
+- CI: сборка Android и тесты — `.github/workflows/android.yml`;
+- release-hardening: package id `by.otiko.qrscanner`, версия `1.0.0`, release-подпись, `allowBackup=false`, импорт старой базы `barcode.db`, стандартная ёмкость без ограничения — `feature/release-hardening`.
 
 Не реализовано:
 
 - проверка API Электронного знака на реальном ТСД;
-- финальная release-подпись.
+- полная проверка сканера, клавиш и обмена с 1С на ТСД.
 
 Подробный план — в [docs/PROJECT-STATE.md](docs/PROJECT-STATE.md).
 Контракт обмена с 1С — в [docs/1C-API.md](docs/1C-API.md).
