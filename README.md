@@ -94,7 +94,7 @@ tests/QRScanner.Core.Tests/
 
 ## Статус
 
-Готово в отдельных ветках, но ещё не слито в `main`:
+Все перечисленные функции собраны в `integration/v1` (`dfbd708`), но ещё не слиты в `main`:
 
 - отгрузка и экспорт `.txt` — `feature/shipment-order-export`;
 - QR-код короба, «Поделиться» и сохранение в файл — `feature/qr-share`;
