@@ -105,11 +105,11 @@ tests/QRScanner.Core.Tests/
 - файловые логи и экран «Логи» — `feature/file-logging`;
 - смена логина и пароля Электронного знака — `fix/datamark-credentials`;
 - проверка GTIN и карточка товара — `feature/gtin-check`;
+- запрет добавления марки без авторизации — `fix/offline-auth`;
 - справка — `feature/help`.
 
 Не реализовано:
 
-- запрет добавления марки без авторизации Datamark;
 - CI (GitHub Actions);
 - проверка API Электронного знака на реальном ТСД;
 - финальная release-подпись.
