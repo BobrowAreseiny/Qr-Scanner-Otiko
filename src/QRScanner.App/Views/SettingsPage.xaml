@@ -60,6 +60,14 @@
                         Margin="0,4,0,0"
                         Command="{Binding ImportCredentialsCommand}" />
 
+                <Button Text="Удалить credentials.txt"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="36"
+                        Margin="0,6,0,0"
+                        BackgroundColor="{StaticResource Danger}"
+                        TextColor="{StaticResource White}"
+                        Command="{Binding DeleteCredentialsFileCommand}" />
+
                 <Button Text="Проверить подключение"
                         Style="{StaticResource MenuButtonStyle}"
                         HeightRequest="40"
@@ -92,7 +100,7 @@
                        Style="{StaticResource BodyLabel}"
                        Margin="0,4,0,0" />
 
-                <Label Text="Файл credentials.txt: Android/data/&lt;package&gt;/files/credentials.txt"
+                <Label Text="Файл credentials.txt: Android/data/&lt;package&gt;/files/credentials.txt. Файл хранит пароль в открытом виде — после импорта удалите его."
                        Style="{StaticResource BodyLabel}"
                        Margin="0,4,0,0" />
 

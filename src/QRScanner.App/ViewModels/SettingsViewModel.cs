@@ -29,6 +29,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         TestCommand = new AsyncRelayCommand(TestAsync);
         ImportCredentialsCommand = new AsyncRelayCommand(ImportCredentialsAsync);
+        DeleteCredentialsFileCommand = new AsyncRelayCommand(DeleteCredentialsFileAsync);
         ShowAboutCommand = new AsyncRelayCommand(ShowAboutAsync);
     }
 
@@ -54,6 +55,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     public IAsyncRelayCommand TestCommand { get; }
 
     public IAsyncRelayCommand ImportCredentialsCommand { get; }
+
+    public IAsyncRelayCommand DeleteCredentialsFileCommand { get; }
 
     public IAsyncRelayCommand ShowAboutCommand { get; }
 
@@ -97,11 +100,37 @@ public sealed partial class SettingsViewModel : ObservableObject
             Login = imported.Login;
             Password = imported.Password;
             StatusMessage =
-                $"Данные загружены из {Path.GetFileName(imported.SourcePath)}. Нажмите «Сохранить».";
+                $"Данные загружены из {Path.GetFileName(imported.SourcePath)}. Нажмите «Сохранить» и удалите файл: он хранит пароль в открытом виде.";
         }
         catch (Exception ex)
         {
             StatusMessage = $"Ошибка импорта: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteCredentialsFileAsync()
+    {
+        var confirmed = await _dialogs.ShowConfirmationAsync(
+            "Удалить credentials.txt",
+            "Файл содержит пароль в открытом виде. Удалить его?",
+            "Удалить",
+            "Отмена");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            var deleted = await _credentialsImporter.DeleteLegacyFilesAsync();
+            StatusMessage = deleted > 0
+                ? "Файл credentials.txt удалён."
+                : "Файл credentials.txt не найден.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Ошибка удаления: {ex.Message}";
         }
     }
 
@@ -111,7 +140,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         try
         {
             await _apiSettings.SaveAsync(new ApiSettings(Server, Login, Password));
-            StatusMessage = "Настройки Электронного знака сохранены.";
+            StatusMessage =
+                "Настройки Электронного знака сохранены. Если credentials.txt больше не нужен, удалите его.";
         }
         catch (Exception ex)
         {

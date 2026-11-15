@@ -12,6 +12,8 @@ public sealed record ImportedCredentials(
 public interface ICredentialsImporter
 {
     Task<ImportedCredentials?> TryImportAsync();
+
+    Task<int> DeleteLegacyFilesAsync();
 }
 
 public sealed class LegacyCredentialsImporter : ICredentialsImporter
@@ -49,6 +51,31 @@ public sealed class LegacyCredentialsImporter : ICredentialsImporter
         }
 
         return Task.FromResult<ImportedCredentials?>(null);
+    }
+
+    public Task<int> DeleteLegacyFilesAsync()
+    {
+        var deleted = 0;
+
+        foreach (var path in GetCandidatePaths())
+        {
+            try
+            {
+                if (!File.Exists(path))
+                {
+                    continue;
+                }
+
+                File.Delete(path);
+                deleted++;
+            }
+            catch
+            {
+                // Файл недоступен для удаления.
+            }
+        }
+
+        return Task.FromResult(deleted);
     }
 
     private static IEnumerable<string> GetCandidatePaths()
