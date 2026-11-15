@@ -1,0 +1,93 @@
+name: Android CI
+
+on:
+  push:
+    branches:
+      - main
+      - integration/v1
+  pull_request:
+    branches:
+      - main
+      - integration/v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Install MAUI Android workload
+        run: dotnet workload install maui-android --skip-manifest-update
+
+      - name: Restore
+        run: dotnet restore QRScanner.Maui.slnx
+
+      - name: Test Core
+        run: >
+          dotnet test tests/QRScanner.Core.Tests/QRScanner.Core.Tests.csproj
+          -c Release
+          --no-restore
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory TestResults
+
+      - name: Build Android APK
+        run: >
+          dotnet build src/QRScanner.App/QRScanner.App.csproj
+          -c Release
+          -f net10.0-android
+          --no-restore
+          -p:ApplicationId=com.companyname.qrscanner.ci
+          -p:ApplicationTitle="Сканер QR CI"
+          -p:EmbedAssembliesIntoApk=true
+          -p:AndroidPackageFormat=apk
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/*.trx
+          if-no-files-found: warn
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: QRScanner-APK
+          path: src/QRScanner.App/bin/Release/net10.0-android/*-Signed.apk
+          if-no-files-found: error
