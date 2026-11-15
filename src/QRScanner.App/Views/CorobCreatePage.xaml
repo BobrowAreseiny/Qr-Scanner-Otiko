@@ -37,6 +37,13 @@
                        Style="{StaticResource SectionHeaderLabel}"
                        Margin="0,8,0,0" />
 
+                <Button Text="Стандарт (без ограничения)"
+                        Style="{StaticResource CapacityButtonStyle}"
+                        BackgroundColor="{Binding CapacityStandardBackground}"
+                        TextColor="{Binding CapacityStandardTextColor}"
+                        Command="{Binding SelectCapacityCommand}"
+                        CommandParameter="0" />
+
                 <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
                     <Button Grid.Column="0"
                             Text="12"
@@ -68,7 +75,7 @@
                             CommandParameter="3" />
                 </Grid>
 
-                <Label Text="{Binding Capacity, StringFormat='Выбрано: {0} марок'}"
+                <Label Text="{Binding CapacityText}"
                        Style="{StaticResource BodyLabel}" />
 
                 <Button Text="Создать"

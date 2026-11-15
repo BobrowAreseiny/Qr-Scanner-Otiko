@@ -5,6 +5,7 @@
 
 Текущее состояние, решения и план — [docs/PROJECT-STATE.md](docs/PROJECT-STATE.md).
 Сборка, архитектура и правила разработки — [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+Release-сборка, подпись и перенос старой базы — [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Реализованный функционал
 

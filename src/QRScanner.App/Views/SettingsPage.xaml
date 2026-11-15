@@ -178,13 +178,31 @@
 
                 <BoxView Style="{StaticResource SettingRowSeparator}" Margin="0,14,0,0" />
 
+                <Label Text="ПЕРЕНОС СТАРОЙ БАЗЫ"
+                       Style="{StaticResource SectionHeaderLabel}" />
+
+                <Label Text="Выберите файл barcode.db старого приложения. Короба и марки будут добавлены в новую зашифрованную базу. Импорт выполняется только в пустую базу."
+                       Style="{StaticResource BodyLabel}" />
+
+                <Button Text="Импортировать старую базу"
+                        Style="{StaticResource MenuButtonStyle}"
+                        HeightRequest="40"
+                        Margin="0,8,0,0"
+                        Command="{Binding ImportLegacyDatabaseCommand}" />
+
+                <Label Text="{Binding LegacyImportStatusMessage}"
+                       Style="{StaticResource BodyLabel}"
+                       Margin="0,6,0,0" />
+
+                <BoxView Style="{StaticResource SettingRowSeparator}" Margin="0,14,0,0" />
+
                 <Label Text="О ПРОГРАММЕ"
                        Style="{StaticResource SectionHeaderLabel}" />
 
                 <Grid ColumnDefinitions="*,Auto" Padding="0,14">
                     <Label Text="Версия" Style="{StaticResource SettingLabel}" />
                     <Label Grid.Column="1"
-                           Text="1.0"
+                           Text="1.0.0"
                            Style="{StaticResource SettingValueLabel}" />
                 </Grid>
 

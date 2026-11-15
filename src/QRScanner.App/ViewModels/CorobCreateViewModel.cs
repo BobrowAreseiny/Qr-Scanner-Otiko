@@ -39,7 +39,7 @@ public sealed partial class CorobCreateViewModel : ObservableObject
     private string name = string.Empty;
 
     [ObservableProperty]
-    private int capacity = 12;
+    private int capacity;
 
     public ICommand SelectCapacityCommand { get; }
 
@@ -47,11 +47,17 @@ public sealed partial class CorobCreateViewModel : ObservableObject
 
     public IAsyncRelayCommand BackCommand { get; }
 
+    public string CapacityText => Capacity > 0
+        ? $"Выбрано: {Capacity} марок"
+        : "Выбрано: без ограничения";
+
+    public Color CapacityStandardBackground => Capacity == 0 ? SelectedBackground : NormalBackground;
     public Color Capacity12Background => Capacity == 12 ? SelectedBackground : NormalBackground;
     public Color Capacity10Background => Capacity == 10 ? SelectedBackground : NormalBackground;
     public Color Capacity5Background => Capacity == 5 ? SelectedBackground : NormalBackground;
     public Color Capacity3Background => Capacity == 3 ? SelectedBackground : NormalBackground;
 
+    public Color CapacityStandardTextColor => Capacity == 0 ? SelectedText : NormalText;
     public Color Capacity12TextColor => Capacity == 12 ? SelectedText : NormalText;
     public Color Capacity10TextColor => Capacity == 10 ? SelectedText : NormalText;
     public Color Capacity5TextColor => Capacity == 5 ? SelectedText : NormalText;
@@ -70,7 +76,8 @@ public sealed partial class CorobCreateViewModel : ObservableObject
 
     private void SelectCapacity(string? value)
     {
-        if (int.TryParse(value, out var capacityValue) && capacityValue > 0)
+        if (int.TryParse(value, out var capacityValue) &&
+            capacityValue is 0 or 12 or 10 or 5 or 3)
         {
             Capacity = capacityValue;
         }
@@ -78,10 +85,13 @@ public sealed partial class CorobCreateViewModel : ObservableObject
 
     partial void OnCapacityChanged(int value)
     {
+        OnPropertyChanged(nameof(CapacityText));
+        OnPropertyChanged(nameof(CapacityStandardBackground));
         OnPropertyChanged(nameof(Capacity12Background));
         OnPropertyChanged(nameof(Capacity10Background));
         OnPropertyChanged(nameof(Capacity5Background));
         OnPropertyChanged(nameof(Capacity3Background));
+        OnPropertyChanged(nameof(CapacityStandardTextColor));
         OnPropertyChanged(nameof(Capacity12TextColor));
         OnPropertyChanged(nameof(Capacity10TextColor));
         OnPropertyChanged(nameof(Capacity5TextColor));

@@ -24,6 +24,18 @@ public sealed class LegacyDatabaseImporter
             return LegacyImportResult.NotNeeded;
         }
 
+        return await ImportFromFileAsync(sourcePath, target);
+    }
+
+    public async Task<LegacyImportResult> ImportFromFileAsync(
+        string sourcePath,
+        SQLiteAsyncConnection target)
+    {
+        if (!File.Exists(sourcePath))
+        {
+            return LegacyImportResult.Failed(sourcePath, "Файл старой базы не найден.");
+        }
+
         if (await target.Table<CorobEntity>().CountAsync() > 0)
         {
             return LegacyImportResult.AlreadyImported;
@@ -75,7 +87,9 @@ public sealed class LegacyDatabaseImporter
                 var corob = new CorobEntity
                 {
                     Name = importedCorob.Name,
-                    Capacity = 12,
+                    // В старом приложении ёмкости не было: короба содержат 63–104 марки.
+                    // 0 — стандартный режим без ограничения количества.
+                    Capacity = 0,
                     IsShipped = importedCorob.IsShipped,
                     CreatedAtUtc = DateTime.UtcNow
                 };

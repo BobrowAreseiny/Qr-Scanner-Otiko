@@ -149,7 +149,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             return;
         }
 
-        if (Barcodes.Count >= Corob.Capacity)
+        if (Corob.Capacity > 0 && Barcodes.Count >= Corob.Capacity)
         {
             StatusMessage = $"Короб заполнен: {Barcodes.Count} из {Corob.Capacity}.";
             return;
@@ -355,6 +355,10 @@ public sealed partial class CorobDetailViewModel : ObservableObject
 
     private void UpdateCount()
     {
-        CountText = $"{Barcodes.Count} / {Corob?.Capacity ?? 0}";
+        CountText = Corob is null
+            ? "0"
+            : Corob.Capacity > 0
+                ? $"{Barcodes.Count} / {Corob.Capacity}"
+                : $"{Barcodes.Count} марок";
     }
 }

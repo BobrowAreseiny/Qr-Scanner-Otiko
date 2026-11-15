@@ -22,7 +22,9 @@ public sealed class CorobListItem
 
     public string Name => Corob.Name;
 
-    public string CountText => $"{BarcodeCount} / {Corob.Capacity}";
+    public string CountText => Corob.Capacity > 0
+        ? $"{BarcodeCount} / {Corob.Capacity}"
+        : $"{BarcodeCount} марок";
 
     public string StatusText => Corob.IsShipped ? "Отгружен" : "Активен";
 }

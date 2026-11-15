@@ -169,7 +169,9 @@ public sealed partial class CorobInfoViewModel : ObservableObject
 
     private static string BuildCorobMeta(int count, CorobEntity corob)
     {
-        var meta = $"{count} / {corob.Capacity}";
+        var meta = corob.Capacity > 0
+            ? $"{count} / {corob.Capacity}"
+            : $"{count} марок";
         return corob.IsShipped ? $"{meta} · Отгружен" : meta;
     }
 

@@ -12,6 +12,8 @@ public interface IDatabaseService
 
     Task InitializeAsync();
 
+    Task<LegacyImportResult> ImportLegacyDatabaseAsync(string sourcePath);
+
     Task<IReadOnlyList<CorobEntity>> GetCorobsAsync();
 
     Task<CorobEntity?> GetCorobAsync(int id);
@@ -161,6 +163,23 @@ public sealed class DatabaseService : IDatabaseService
         return await connection.Table<CorobEntity>()
             .OrderByDescending(c => c.CreatedAtUtc)
             .ToListAsync();
+    }
+
+    public async Task<LegacyImportResult> ImportLegacyDatabaseAsync(string sourcePath)
+    {
+        var connection = await GetConnectionAsync();
+        var result = await _legacyImporter.ImportFromFileAsync(sourcePath, connection);
+
+        _logger.LogInformation(
+            "Импорт старой базы вручную: imported={Imported}, corobs={Corobs}, barcodes={Barcodes}, orphans={Orphans}, source={Source}, error={Error}",
+            result.Imported,
+            result.Corobs,
+            result.Barcodes,
+            result.OrphanBarcodes,
+            result.SourcePath,
+            result.Error);
+
+        return result;
     }
 
     public async Task<CorobEntity?> GetCorobAsync(int id)

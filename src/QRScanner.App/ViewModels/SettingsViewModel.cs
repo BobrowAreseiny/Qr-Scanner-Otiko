@@ -18,6 +18,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IDbKeyProvider _keyProvider;
     private readonly IDatabaseBackupService _backupService;
     private readonly IFileTransferService _fileTransfer;
+    private readonly IDatabaseService _database;
 
     public SettingsViewModel(
         INavigationService navigation,
@@ -26,7 +27,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         IDatamarkApiClient apiClient,
         IDbKeyProvider keyProvider,
         IDatabaseBackupService backupService,
-        IFileTransferService fileTransfer)
+        IFileTransferService fileTransfer,
+        IDatabaseService database)
     {
         _navigation = navigation;
         _dialogs = dialogs;
@@ -35,6 +37,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _keyProvider = keyProvider;
         _backupService = backupService;
         _fileTransfer = fileTransfer;
+        _database = database;
 
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
@@ -48,6 +51,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         CreateBackupCommand = new AsyncRelayCommand(CreateBackupAsync);
         SaveBackupCommand = new AsyncRelayCommand(SaveBackupAsync);
         RestoreBackupCommand = new AsyncRelayCommand(RestoreBackupAsync);
+        ImportLegacyDatabaseCommand = new AsyncRelayCommand(ImportLegacyDatabaseAsync);
     }
 
     [ObservableProperty]
@@ -80,6 +84,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string lastBackupText = "Копий нет.";
 
+    [ObservableProperty]
+    private string legacyImportStatusMessage = string.Empty;
+
     public IAsyncRelayCommand BackCommand { get; }
 
     public IAsyncRelayCommand SaveCommand { get; }
@@ -101,6 +108,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     public IAsyncRelayCommand SaveBackupCommand { get; }
 
     public IAsyncRelayCommand RestoreBackupCommand { get; }
+
+    public IAsyncRelayCommand ImportLegacyDatabaseCommand { get; }
 
     public async Task LoadAsync()
     {
@@ -315,6 +324,73 @@ public sealed partial class SettingsViewModel : ObservableObject
         catch (Exception ex)
         {
             BackupStatusMessage = $"Ошибка восстановления: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+
+            if (pickedPath is not null && File.Exists(pickedPath))
+            {
+                File.Delete(pickedPath);
+            }
+        }
+    }
+
+    private async Task ImportLegacyDatabaseAsync()
+    {
+        string? pickedPath = null;
+        try
+        {
+            if (await _database.CountCorobsAsync() > 0)
+            {
+                LegacyImportStatusMessage =
+                    "Импорт возможен только в пустую базу. Сейчас в базе уже есть короба.";
+                return;
+            }
+
+            pickedPath = await _fileTransfer.PickAsync("*/*");
+            if (pickedPath is null)
+            {
+                LegacyImportStatusMessage = "Файл не выбран.";
+                return;
+            }
+
+            var confirmed = await _dialogs.ShowConfirmationAsync(
+                "Импорт старой базы",
+                "Будут добавлены короба и марки из файла barcode.db. Продолжить?",
+                "Импортировать",
+                "Отмена");
+
+            if (!confirmed)
+            {
+                LegacyImportStatusMessage = "Импорт отменён.";
+                return;
+            }
+
+            IsBusy = true;
+            var result = await _database.ImportLegacyDatabaseAsync(pickedPath);
+
+            if (result.Imported)
+            {
+                LegacyImportStatusMessage =
+                    $"Импортировано: коробов {result.Corobs}, марок {result.Barcodes}." +
+                    (result.OrphanBarcodes > 0
+                        ? $" Пропущено марок без короба: {result.OrphanBarcodes}."
+                        : string.Empty);
+            }
+            else if (!string.IsNullOrWhiteSpace(result.Error))
+            {
+                LegacyImportStatusMessage = $"Ошибка импорта: {result.Error}";
+            }
+            else
+            {
+                LegacyImportStatusMessage =
+                    "В выбранном файле не найдено коробов и марок.";
+            }
+        }
+        catch (Exception ex)
+        {
+            LegacyImportStatusMessage = $"Ошибка импорта: {ex.Message}";
         }
         finally
         {
