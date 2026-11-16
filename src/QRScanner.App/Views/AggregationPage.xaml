@@ -6,40 +6,138 @@
              Title="Агрегация"
              Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="Auto,*"
+    <Grid RowDefinitions="40,*"
           BackgroundColor="{StaticResource Background}">
 
-        <controls:MenuHeader Grid.Row="0"
-                             Title="Агрегация" />
+        <controls:AppToolbar Grid.Row="0"
+                             Title="Агрегация"
+                             ShowBack="True"
+                             BackCommand="{Binding BackCommand}" />
 
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="0,20,0,0" Spacing="16">
+            <VerticalStackLayout Padding="16,12,16,16" Spacing="12">
 
-                <Button Text="1. Создать короб"
-                        Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding CreateCorobCommand}" />
+                <Label Text="ВЫБЕРИТЕ ДЕЙСТВИЕ"
+                       Style="{StaticResource SectionHeaderLabel}"
+                       Margin="0,0,0,0" />
 
-                <Button Text="2. Короба"
-                        Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding OpenCorobsCommand}" />
+                <Grid ColumnDefinitions="*,*"
+                      RowDefinitions="Auto,Auto"
+                      ColumnSpacing="12"
+                      RowSpacing="12">
 
-                <Button Text="3. Информация"
-                        Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding OpenInfoCommand}" />
+                    <Border Grid.Row="0"
+                            Grid.Column="0"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Создать короб">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding CreateCorobCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="menu_create.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="Создать короб"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="Новый короб и марки"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
+                        </Grid>
+                    </Border>
 
-                <Button Text="4. Проверка GTIN"
-                        Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding OpenGtinCheckCommand}" />
+                    <Border Grid.Row="0"
+                            Grid.Column="1"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Короба">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenCorobsCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="menu_boxes.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="Короба"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="Список и состав"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
+                        </Grid>
+                    </Border>
 
-                <BoxView Style="{StaticResource ThinDivider}"
-                         Margin="0,7,0,0" />
+                    <Border Grid.Row="1"
+                            Grid.Column="0"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Информация о марке">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenInfoCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="menu_info.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="Поиск"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="Марка в коробах"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
+                        </Grid>
+                    </Border>
 
-                <Button Text="0. Назад"
-                        Style="{StaticResource MenuButtonStyle}"
-                        Margin="7,37,7,0"
-                        Command="{Binding BackCommand}" />
-
-                <BoxView HeightRequest="60" />
+                    <Border Grid.Row="1"
+                            Grid.Column="1"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Проверка GTIN">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenGtinCheckCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="menu_gtin.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="Проверка GTIN"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="Карточка товара"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
+                        </Grid>
+                    </Border>
+                </Grid>
 
             </VerticalStackLayout>
         </ScrollView>
