@@ -6,7 +6,7 @@
              Title="Создать короб"
              Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="40,3,*"
+    <Grid RowDefinitions="40,3,*,Auto"
           BackgroundColor="{StaticResource Background}">
 
         <controls:AppToolbar Grid.Row="0"
@@ -18,80 +18,92 @@
                  Style="{StaticResource ThinDivider}" />
 
         <ScrollView Grid.Row="2">
-            <VerticalStackLayout Padding="16,16,16,24" Spacing="14">
+            <VerticalStackLayout Padding="16,12,16,16" Spacing="12">
 
-                <Label Text="Название короба"
-                       Style="{StaticResource SectionHeaderLabel}"
-                       Margin="0,0,0,0" />
+                <Border Style="{StaticResource CardStyle}"
+                        Margin="0"
+                        Padding="14">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Название короба"
+                               Style="{StaticResource SectionHeaderLabel}"
+                               Margin="0,0,0,0" />
 
-                <Border BackgroundColor="{StaticResource Surface}"
-                        Stroke="{StaticResource Border}"
-                        StrokeThickness="1"
-                        StrokeShape="Rectangle"
-                        Padding="8,0">
-                    <Entry Text="{Binding Name, Mode=TwoWay}"
-                           Placeholder="Например, №1" />
+                        <Border BackgroundColor="{StaticResource Surface}"
+                                Stroke="{StaticResource Border}"
+                                StrokeThickness="1"
+                                StrokeShape="Rectangle"
+                                Padding="10,0">
+                            <Entry Text="{Binding Name, Mode=TwoWay}"
+                                   Placeholder="Например, №1" />
+                        </Border>
+
+                        <Label Text="Ёмкость"
+                               Style="{StaticResource SectionHeaderLabel}"
+                               Margin="0,6,0,0" />
+
+                        <Button Text="Стандарт (без ограничения)"
+                                Style="{StaticResource CapacityButtonStyle}"
+                                BackgroundColor="{Binding CapacityStandardBackground}"
+                                TextColor="{Binding CapacityStandardTextColor}"
+                                Command="{Binding SelectCapacityCommand}"
+                                CommandParameter="0" />
+
+                        <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
+                            <Button Grid.Column="0"
+                                    Text="12"
+                                    Style="{StaticResource CapacityButtonStyle}"
+                                    BackgroundColor="{Binding Capacity12Background}"
+                                    TextColor="{Binding Capacity12TextColor}"
+                                    Command="{Binding SelectCapacityCommand}"
+                                    CommandParameter="12" />
+                            <Button Grid.Column="1"
+                                    Text="10"
+                                    Style="{StaticResource CapacityButtonStyle}"
+                                    BackgroundColor="{Binding Capacity10Background}"
+                                    TextColor="{Binding Capacity10TextColor}"
+                                    Command="{Binding SelectCapacityCommand}"
+                                    CommandParameter="10" />
+                            <Button Grid.Column="2"
+                                    Text="5"
+                                    Style="{StaticResource CapacityButtonStyle}"
+                                    BackgroundColor="{Binding Capacity5Background}"
+                                    TextColor="{Binding Capacity5TextColor}"
+                                    Command="{Binding SelectCapacityCommand}"
+                                    CommandParameter="5" />
+                            <Button Grid.Column="3"
+                                    Text="3"
+                                    Style="{StaticResource CapacityButtonStyle}"
+                                    BackgroundColor="{Binding Capacity3Background}"
+                                    TextColor="{Binding Capacity3TextColor}"
+                                    Command="{Binding SelectCapacityCommand}"
+                                    CommandParameter="3" />
+                        </Grid>
+
+                        <Label Text="{Binding CapacityText}"
+                               Style="{StaticResource BodyLabel}" />
+                    </VerticalStackLayout>
                 </Border>
 
-                <Label Text="Ёмкость"
-                       Style="{StaticResource SectionHeaderLabel}"
-                       Margin="0,8,0,0" />
-
-                <Button Text="Стандарт (без ограничения)"
-                        Style="{StaticResource CapacityButtonStyle}"
-                        BackgroundColor="{Binding CapacityStandardBackground}"
-                        TextColor="{Binding CapacityStandardTextColor}"
-                        Command="{Binding SelectCapacityCommand}"
-                        CommandParameter="0" />
-
-                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
-                    <Button Grid.Column="0"
-                            Text="12"
-                            Style="{StaticResource CapacityButtonStyle}"
-                            BackgroundColor="{Binding Capacity12Background}"
-                            TextColor="{Binding Capacity12TextColor}"
-                            Command="{Binding SelectCapacityCommand}"
-                            CommandParameter="12" />
-                    <Button Grid.Column="1"
-                            Text="10"
-                            Style="{StaticResource CapacityButtonStyle}"
-                            BackgroundColor="{Binding Capacity10Background}"
-                            TextColor="{Binding Capacity10TextColor}"
-                            Command="{Binding SelectCapacityCommand}"
-                            CommandParameter="10" />
-                    <Button Grid.Column="2"
-                            Text="5"
-                            Style="{StaticResource CapacityButtonStyle}"
-                            BackgroundColor="{Binding Capacity5Background}"
-                            TextColor="{Binding Capacity5TextColor}"
-                            Command="{Binding SelectCapacityCommand}"
-                            CommandParameter="5" />
-                    <Button Grid.Column="3"
-                            Text="3"
-                            Style="{StaticResource CapacityButtonStyle}"
-                            BackgroundColor="{Binding Capacity3Background}"
-                            TextColor="{Binding Capacity3TextColor}"
-                            Command="{Binding SelectCapacityCommand}"
-                            CommandParameter="3" />
-                </Grid>
-
-                <Label Text="{Binding CapacityText}"
-                       Style="{StaticResource BodyLabel}" />
-
-                <Grid ColumnDefinitions="*,*"
-                      ColumnSpacing="8"
-                      Margin="0,16,0,0">
-                    <Button Text="Создать"
-                            Style="{StaticResource CompactMenuButtonStyle}"
-                            Command="{Binding CreateCommand}" />
-                    <Button Grid.Column="1"
-                            Text="Назад"
-                            Style="{StaticResource CompactMenuButtonStyle}"
-                            Command="{Binding BackCommand}" />
-                </Grid>
+                <Label Text="Одна марка может находиться только в одном коробе."
+                       Style="{StaticResource BodyLabel}"
+                       Margin="2,0,0,0" />
 
             </VerticalStackLayout>
         </ScrollView>
+
+        <Grid Grid.Row="3"
+              Padding="8,4,8,12"
+              ColumnDefinitions="*,*"
+              ColumnSpacing="8"
+              BackgroundColor="{StaticResource Background}">
+            <Button Text="Создать"
+                    Style="{StaticResource CompactMenuButtonStyle}"
+                    Command="{Binding CreateCommand}" />
+            <Button Grid.Column="1"
+                    Text="Назад"
+                    Style="{StaticResource CompactMenuButtonStyle}"
+                    Command="{Binding BackCommand}" />
+        </Grid>
 
     </Grid>
 
