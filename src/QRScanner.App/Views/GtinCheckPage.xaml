@@ -30,7 +30,7 @@
                         Padding="8,0"
                         Margin="0,0,0,10">
                     <Entry Text="{Binding Gtin, Mode=TwoWay}"
-                           Placeholder="04810498044822" />
+                           Placeholder="Введите GTIN или отсканируйте код" />
                 </Border>
 
                 <Label Text="{Binding StatusMessage}"
