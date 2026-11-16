@@ -49,6 +49,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IOneCSettingsService, SecureStorageOneCSettingsService>();
 		builder.Services.AddSingleton<IOneCApiClient, OneCApiClient>();
 		builder.Services.AddSingleton<IQrCodeService, QrCodeService>();
+		builder.Services.AddSingleton<IOrderFileExporter, OrderFileExporter>();
 
 		builder.Services.AddSingleton<IDbKeyProvider, SecureStorageDbKeyProvider>();
 		builder.Services.AddSingleton<LegacyDatabaseImporter>();

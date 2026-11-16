@@ -114,9 +114,18 @@
                                     StrokeShape="Rectangle"
                                     Padding="10,0">
                                 <Entry Text="{Binding Password, Mode=TwoWay}"
-                                       IsPassword="True"
+                                       IsPassword="{Binding IsPasswordHidden}"
                                        Placeholder="Пароль 1С" />
                             </Border>
+
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                <Switch IsToggled="{Binding IsPasswordVisible}"
+                                        SemanticProperties.Description="Показать пароль" />
+                                <Label Grid.Column="1"
+                                       Text="Показать пароль"
+                                       FontSize="16"
+                                       VerticalOptions="Center" />
+                            </Grid>
                         </VerticalStackLayout>
 
                         <Label Text="Склад" Style="{StaticResource SettingLabel}" />

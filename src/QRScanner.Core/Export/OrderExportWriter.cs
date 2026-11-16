@@ -16,10 +16,26 @@ public static class OrderExportWriter
         var safeName = SanitizeFileName(fileName);
         var path = Path.Combine(directory, $"{safeName}.txt");
 
-        await using var writer = new StreamWriter(
+        await using var stream = new FileStream(
             path,
-            append: false,
-            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false))
+            FileMode.Create,
+            FileAccess.Write,
+            FileShare.None);
+
+        await WriteAsync(stream, codes, cancellationToken);
+        return path;
+    }
+
+    public static async Task WriteAsync(
+        Stream stream,
+        IEnumerable<string> codes,
+        CancellationToken cancellationToken = default)
+    {
+        using var writer = new StreamWriter(
+            stream,
+            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            bufferSize: 1024,
+            leaveOpen: true)
         {
             NewLine = "\n"
         };
@@ -30,7 +46,7 @@ public static class OrderExportWriter
             await writer.WriteLineAsync(code);
         }
 
-        return path;
+        await writer.FlushAsync(cancellationToken);
     }
 
     public static string SanitizeFileName(string name)

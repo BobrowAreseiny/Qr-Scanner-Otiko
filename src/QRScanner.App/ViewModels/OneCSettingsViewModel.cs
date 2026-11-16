@@ -71,6 +71,16 @@ public sealed partial class OneCSettingsViewModel : ObservableObject
     private string password = string.Empty;
 
     [ObservableProperty]
+    private bool isPasswordVisible;
+
+    public bool IsPasswordHidden => !IsPasswordVisible;
+
+    partial void OnIsPasswordVisibleChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsPasswordHidden));
+    }
+
+    [ObservableProperty]
     private string warehouse = OneCConnectionSettings.DefaultWarehouse;
 
     [ObservableProperty]
@@ -102,6 +112,7 @@ public sealed partial class OneCSettingsViewModel : ObservableObject
         Token = settings.Token;
         Login = settings.Login;
         Password = settings.Password;
+        IsPasswordVisible = false;
         Warehouse = settings.Warehouse;
         TimeoutSeconds = settings.TimeoutSeconds.ToString(CultureInfo.InvariantCulture);
         AllowInvalidCertificate = settings.AllowInvalidCertificate;

@@ -42,4 +42,22 @@ public sealed class OrderExportWriterTests
             }
         }
     }
+
+    [Fact]
+    public async Task Writes_stream_without_bom_and_with_lf()
+    {
+        var codes = new[]
+        {
+            "è010460000000000121ABC\u001d910005\u001d92XYZ"
+        };
+
+        using var stream = new MemoryStream();
+        await OrderExportWriter.WriteAsync(stream, codes);
+
+        var bytes = stream.ToArray();
+        var text = Encoding.UTF8.GetString(bytes);
+
+        Assert.False(bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF);
+        Assert.Equal("010460000000000121ABC\u001d910005\u001d92XYZ\n", text);
+    }
 }

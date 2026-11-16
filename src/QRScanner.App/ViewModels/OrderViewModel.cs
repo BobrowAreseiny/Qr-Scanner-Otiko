@@ -5,7 +5,6 @@ using QRScanner.App.Data;
 using QRScanner.App.Data.Entities;
 using QRScanner.App.Services;
 using QRScanner.Core.Barcodes;
-using QRScanner.Core.Export;
 
 namespace QRScanner.App.ViewModels;
 
@@ -18,6 +17,7 @@ public sealed partial class OrderViewModel : ObservableObject
     private readonly IDatamarkApiClient _apiClient;
     private readonly IOneCSettingsService _oneCSettings;
     private readonly IOneCApiClient _oneCClient;
+    private readonly IOrderFileExporter _orderFileExporter;
 
     public OrderViewModel(
         IDatabaseService database,
@@ -26,7 +26,8 @@ public sealed partial class OrderViewModel : ObservableObject
         IApiSettingsService apiSettings,
         IDatamarkApiClient apiClient,
         IOneCSettingsService oneCSettings,
-        IOneCApiClient oneCClient)
+        IOneCApiClient oneCClient,
+        IOrderFileExporter orderFileExporter)
     {
         _database = database;
         _navigation = navigation;
@@ -35,6 +36,7 @@ public sealed partial class OrderViewModel : ObservableObject
         _apiClient = apiClient;
         _oneCSettings = oneCSettings;
         _oneCClient = oneCClient;
+        _orderFileExporter = orderFileExporter;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
@@ -291,13 +293,17 @@ public sealed partial class OrderViewModel : ObservableObject
                 await _database.SaveCorobAsync(corob);
             }
 
-            var path = await ExportAsync(Name.Trim(), Lines.Select(l => l.Barcode));
+            var export = await ExportAsync(Name.Trim(), Lines.Select(l => l.Barcode));
             var oneCStatus = await TrySendTo1CAsync(order);
 
-            StatusMessage = $"Сохранено: {Path.GetFileName(path)}. {oneCStatus}";
+            StatusMessage = $"Сохранено: {export.FileName}. {oneCStatus}";
+            var locationText = export.IsPublic
+                ? $"Файл сохранён:\n{export.DisplayPath}"
+                : $"Файл сохранён во внутренней папке:\n{export.DisplayPath}";
+
             await _dialogs.ShowAlertAsync(
                 "Заказ",
-                $"Файл сохранён:\n{path}\n\n{oneCStatus}",
+                $"{locationText}\n\n{oneCStatus}",
                 "OK");
         }
         catch (Exception ex)
@@ -366,10 +372,11 @@ public sealed partial class OrderViewModel : ObservableObject
         StatusMessage = "Марка удалена из заказа";
     }
 
-    private static Task<string> ExportAsync(string name, IEnumerable<string> barcodes)
+    private Task<OrderFileExportResult> ExportAsync(
+        string name,
+        IEnumerable<string> barcodes)
     {
-        var directory = Path.Combine(FileSystem.AppDataDirectory, "Otiko");
-        return OrderExportWriter.WriteAsync(directory, name, barcodes);
+        return _orderFileExporter.ExportAsync(name, barcodes);
     }
 
     private void UpdateCount()

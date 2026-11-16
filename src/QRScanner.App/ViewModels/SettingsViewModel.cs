@@ -64,6 +64,16 @@ public sealed partial class SettingsViewModel : ObservableObject
     private string password = string.Empty;
 
     [ObservableProperty]
+    private bool isPasswordVisible;
+
+    public bool IsPasswordHidden => !IsPasswordVisible;
+
+    partial void OnIsPasswordVisibleChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsPasswordHidden));
+    }
+
+    [ObservableProperty]
     private string statusMessage = string.Empty;
 
     [ObservableProperty]
@@ -117,6 +127,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         Server = settings.BaseUrl;
         Login = settings.Login;
         Password = settings.Password;
+        IsPasswordVisible = false;
         StatusMessage = settings.HasCredentials
             ? "Данные Электронного знака (Datamark) загружены."
             : "Укажите логин и пароль Электронного знака.";
