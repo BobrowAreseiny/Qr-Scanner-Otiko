@@ -55,17 +55,18 @@ public sealed partial class OrderHistoryViewModel : ObservableObject
         try
         {
             var orders = await _database.GetOrdersAsync();
+            var counts = await _database.GetOrderLineCountsAsync();
             Orders.Clear();
 
             foreach (var order in orders)
             {
-                var lines = await _database.GetOrderLinesAsync(order.Id);
+                var count = counts.GetValueOrDefault(order.Id);
                 Orders.Add(new OrderHistoryItem
                 {
                     OrderId = order.Id,
                     Name = order.Name,
                     DateText = order.CreatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm"),
-                    CountText = FormatCount(lines.Count),
+                    CountText = FormatCount(count),
                     StatusText = order.IsShipped ? "Отправлено" : "На складе",
                     OneCStatusText = order.IsSentTo1C
                         ? string.IsNullOrWhiteSpace(order.OneCNumber)

@@ -85,7 +85,7 @@
                             </VerticalStackLayout>
 
                             <Button Grid.Column="1"
-                                    Text="✕"
+                                    Text="🗑"
                                     WidthRequest="48"
                                     MinimumWidthRequest="48"
                                     FontSize="22"

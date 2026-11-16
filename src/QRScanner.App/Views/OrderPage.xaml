@@ -72,7 +72,7 @@
                                     </VerticalStackLayout>
 
                                     <Button Grid.Column="1"
-                                            Text="✕"
+                                            Text="🗑"
                                             WidthRequest="48"
                                             MinimumWidthRequest="48"
                                             FontSize="22"
@@ -89,21 +89,20 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <VerticalStackLayout Grid.Row="3"
-                             Padding="0,4,0,12"
-                             Spacing="8"
-                             BackgroundColor="{StaticResource Background}">
-            <Button Text="1. Сохранить"
-                    Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="52"
+        <Grid Grid.Row="3"
+              Padding="8,4,8,12"
+              ColumnDefinitions="*,*"
+              ColumnSpacing="8"
+              BackgroundColor="{StaticResource Background}">
+            <Button Text="Сохранить"
+                    Style="{StaticResource CompactMenuButtonStyle}"
                     Command="{Binding SaveCommand}" />
 
-            <Button Text="0. Назад"
-                    Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="52"
-                    Margin="7,0"
+            <Button Grid.Column="1"
+                    Text="Назад"
+                    Style="{StaticResource CompactMenuButtonStyle}"
                     Command="{Binding BackCommand}" />
-        </VerticalStackLayout>
+        </Grid>
 
     </Grid>
 

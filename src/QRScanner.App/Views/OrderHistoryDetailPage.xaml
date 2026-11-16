@@ -92,27 +92,26 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <VerticalStackLayout Grid.Row="3"
-                             Padding="0,4,0,12"
-                             Spacing="8"
-                             BackgroundColor="{StaticResource Background}">
-            <Button Text="1. Отправлено"
-                    Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="52"
+        <Grid Grid.Row="3"
+              Padding="8,4,8,12"
+              ColumnDefinitions="*,*,*"
+              ColumnSpacing="8"
+              BackgroundColor="{StaticResource Background}">
+            <Button Text="Отправлено"
+                    Style="{StaticResource CompactMenuButtonStyle}"
                     Command="{Binding ShipCommand}" />
 
-            <Button Text="2. Вернуть на склад"
-                    Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="52"
-                    Margin="7,0"
+            <Button Grid.Column="1"
+                    Text="Вернуть"
+                    Style="{StaticResource CompactMenuButtonStyle}"
+                    SemanticProperties.Description="Вернуть на склад"
                     Command="{Binding ReturnCommand}" />
 
-            <Button Text="0. Назад"
-                    Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="52"
-                    Margin="7,0"
+            <Button Grid.Column="2"
+                    Text="Назад"
+                    Style="{StaticResource CompactMenuButtonStyle}"
                     Command="{Binding BackCommand}" />
-        </VerticalStackLayout>
+        </Grid>
 
     </Grid>
 

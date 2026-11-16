@@ -301,7 +301,16 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         catch (Exception ex)
         {
             StatusMessage = $"Ошибка QR: {ex.Message}";
-            await _dialogs.ShowAlertAsync("QR-код", StatusMessage);
+            var saveToFile = await _dialogs.ShowConfirmationAsync(
+                "QR-код",
+                "Не удалось поделиться QR-кодом. Сохранить его в файл?",
+                "Сохранить",
+                "Отмена");
+
+            if (saveToFile)
+            {
+                await SaveQrToFileAsync();
+            }
         }
     }
 

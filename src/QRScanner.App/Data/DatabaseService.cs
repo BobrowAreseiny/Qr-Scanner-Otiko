@@ -32,6 +32,8 @@ public interface IDatabaseService
 
     Task<IReadOnlyList<OrderEntity>> GetOrdersAsync();
 
+    Task<IReadOnlyDictionary<int, int>> GetOrderLineCountsAsync();
+
     Task<OrderEntity?> GetOrderAsync(int id);
 
     Task<IReadOnlyList<OrderLineEntity>> GetOrderLinesAsync(int orderId);
@@ -246,6 +248,15 @@ public sealed class DatabaseService : IDatabaseService
         return await connection.Table<OrderEntity>()
             .OrderByDescending(o => o.CreatedAtUtc)
             .ToListAsync();
+    }
+
+    public async Task<IReadOnlyDictionary<int, int>> GetOrderLineCountsAsync()
+    {
+        var connection = await GetConnectionAsync();
+        var rows = await connection.QueryAsync<OrderLineCount>(
+            "SELECT OrderId, COUNT(*) AS Count FROM OrderLine GROUP BY OrderId");
+
+        return rows.ToDictionary(row => row.OrderId, row => row.Count);
     }
 
     public async Task<OrderEntity?> GetOrderAsync(int id)
@@ -597,6 +608,13 @@ public sealed class DatabaseService : IDatabaseService
 public sealed class CorobBarcodeCount
 {
     public int CorobId { get; set; }
+
+    public int Count { get; set; }
+}
+
+public sealed class OrderLineCount
+{
+    public int OrderId { get; set; }
 
     public int Count { get; set; }
 }
