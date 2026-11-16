@@ -31,7 +31,7 @@
                        Style="{StaticResource BodyLabel}" />
                 <Label Text="1 — Агрегация, 2 — Отгрузка, 3 — История, 4 — Настройки, 0 — Выход."
                        Style="{StaticResource BodyLabel}" />
-                <Label Text="Верхнее меню (⋮): Логи, Справка, О программе, Выход."
+                <Label Text="Верхнее меню (⋮): Логи, О программе. Внизу главного экрана — «Справка» и «Выход»."
                        Style="{StaticResource BodyLabel}" />
 
                 <Label Text="КЛАВИШИ"

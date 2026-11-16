@@ -139,6 +139,18 @@
                     </Border>
                 </Grid>
 
+                <Grid ColumnDefinitions="*,*"
+                      ColumnSpacing="12"
+                      Margin="0,4,0,0">
+                    <Button Text="Справка"
+                            Style="{StaticResource CompactMenuButtonStyle}"
+                            Command="{Binding OpenHelpCommand}" />
+                    <Button Grid.Column="1"
+                            Text="Выход"
+                            Style="{StaticResource CompactMenuButtonStyle}"
+                            Command="{Binding ExitCommand}" />
+                </Grid>
+
             </VerticalStackLayout>
         </ScrollView>
 

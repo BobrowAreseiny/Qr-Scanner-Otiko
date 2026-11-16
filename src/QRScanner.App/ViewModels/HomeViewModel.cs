@@ -27,6 +27,9 @@ public sealed class HomeViewModel : ObservableObject
         OpenSettingsCommand = new AsyncRelayCommand(
             () => _navigation.GoToAsync(nameof(SettingsPage)));
 
+        OpenHelpCommand = new AsyncRelayCommand(
+            () => _navigation.GoToAsync(nameof(HelpPage)));
+
         ShowMenuCommand = new AsyncRelayCommand(ShowMenuAsync);
         ExitCommand = new AsyncRelayCommand(ExitAsync);
     }
@@ -39,6 +42,8 @@ public sealed class HomeViewModel : ObservableObject
 
     public IAsyncRelayCommand OpenSettingsCommand { get; }
 
+    public IAsyncRelayCommand OpenHelpCommand { get; }
+
     public IAsyncRelayCommand ShowMenuCommand { get; }
 
     public IAsyncRelayCommand ExitCommand { get; }
@@ -48,28 +53,16 @@ public sealed class HomeViewModel : ObservableObject
         var choice = await _dialogs.ShowActionSheetAsync(
             "Меню",
             "Отмена",
-            "Настройки",
             "Логи",
-            "Справка",
-            "О программе",
-            "Выход");
+            "О программе");
 
         switch (choice)
         {
-            case "Настройки":
-                await _navigation.GoToAsync(nameof(SettingsPage));
-                break;
             case "Логи":
                 await _navigation.GoToAsync(nameof(LogsPage));
                 break;
-            case "Справка":
-                await _navigation.GoToAsync(nameof(HelpPage));
-                break;
             case "О программе":
                 await ShowAboutAsync();
-                break;
-            case "Выход":
-                await ExitAsync();
                 break;
         }
     }
