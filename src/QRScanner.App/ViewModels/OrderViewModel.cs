@@ -1,11 +1,11 @@
 using System.Collections.ObjectModel;
-using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QRScanner.App.Data;
 using QRScanner.App.Data.Entities;
 using QRScanner.App.Services;
 using QRScanner.Core.Barcodes;
+using QRScanner.Core.Export;
 
 namespace QRScanner.App.ViewModels;
 
@@ -122,6 +122,14 @@ public sealed partial class OrderViewModel : ObservableObject
         }
 
         var corob = await _database.GetCorobAsync(corobId);
+        if (corob is null)
+        {
+            var corobs = await _database.GetCorobsAsync();
+            corob = corobs.FirstOrDefault(item =>
+                string.Equals(item.Name.Trim(), code, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(item.Name.Trim(), $"№{corobId}", StringComparison.OrdinalIgnoreCase));
+        }
+
         if (corob is null)
         {
             StatusMessage = $"Короб №{corobId} не найден.";
@@ -358,27 +366,10 @@ public sealed partial class OrderViewModel : ObservableObject
         StatusMessage = "Марка удалена из заказа";
     }
 
-    private static async Task<string> ExportAsync(string name, IEnumerable<string> barcodes)
+    private static Task<string> ExportAsync(string name, IEnumerable<string> barcodes)
     {
         var directory = Path.Combine(FileSystem.AppDataDirectory, "Otiko");
-        Directory.CreateDirectory(directory);
-
-        var safeName = SanitizeFileName(name);
-        var path = Path.Combine(directory, $"{safeName}.txt");
-
-        await File.WriteAllLinesAsync(
-            path,
-            barcodes.Select(BarcodeParser.CleanForExport),
-            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-
-        return path;
-    }
-
-    private static string SanitizeFileName(string name)
-    {
-        var invalid = Path.GetInvalidFileNameChars();
-        var safe = new string(name.Select(c => invalid.Contains(c) ? '_' : c).ToArray()).Trim();
-        return string.IsNullOrWhiteSpace(safe) ? "Заказ" : safe;
+        return OrderExportWriter.WriteAsync(directory, name, barcodes);
     }
 
     private void UpdateCount()

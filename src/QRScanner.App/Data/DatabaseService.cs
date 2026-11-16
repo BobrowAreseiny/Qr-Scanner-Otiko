@@ -227,11 +227,20 @@ public sealed class DatabaseService : IDatabaseService
     public async Task<int> GetNextCorobNumberAsync()
     {
         var connection = await GetConnectionAsync();
-        var last = await connection.Table<CorobEntity>()
-            .OrderByDescending(c => c.Id)
-            .FirstOrDefaultAsync();
 
-        return (last?.Id ?? 0) + 1;
+        try
+        {
+            var sequence = await connection.ExecuteScalarAsync<long>(
+                "SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name = 'Corob'), 0)");
+            return (int)sequence + 1;
+        }
+        catch
+        {
+            var last = await connection.Table<CorobEntity>()
+                .OrderByDescending(c => c.Id)
+                .FirstOrDefaultAsync();
+            return (last?.Id ?? 0) + 1;
+        }
     }
 
     public async Task<BoxBarcodeEntity?> FindBarcodeAsync(string barcode)
