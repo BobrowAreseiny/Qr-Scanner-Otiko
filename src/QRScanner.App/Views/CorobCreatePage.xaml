@@ -78,17 +78,17 @@
                 <Label Text="{Binding CapacityText}"
                        Style="{StaticResource BodyLabel}" />
 
-                <Button Text="Создать"
-                        Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="52"
-                        Margin="0,16,0,0"
-                        Command="{Binding CreateCommand}" />
-
-                <Button Text="0. Назад"
-                        Style="{StaticResource MenuButtonStyle}"
-                        HeightRequest="52"
-                        Margin="0,8,0,0"
-                        Command="{Binding BackCommand}" />
+                <Grid ColumnDefinitions="*,*"
+                      ColumnSpacing="8"
+                      Margin="0,16,0,0">
+                    <Button Text="Создать"
+                            Style="{StaticResource CompactMenuButtonStyle}"
+                            Command="{Binding CreateCommand}" />
+                    <Button Grid.Column="1"
+                            Text="Назад"
+                            Style="{StaticResource CompactMenuButtonStyle}"
+                            Command="{Binding BackCommand}" />
+                </Grid>
 
             </VerticalStackLayout>
         </ScrollView>

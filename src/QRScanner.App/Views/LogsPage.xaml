@@ -80,7 +80,7 @@
                              Padding="0,4,0,12"
                              Spacing="8"
                              BackgroundColor="{StaticResource Background}">
-            <Button Text="0. Назад"
+            <Button Text="Назад"
                     Style="{StaticResource MenuButtonStyle}"
                     HeightRequest="52"
                     Margin="7,0"

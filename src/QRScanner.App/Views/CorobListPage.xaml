@@ -93,20 +93,19 @@
                                VerticalOptions="Center" />
         </Grid>
 
-        <VerticalStackLayout Grid.Row="3"
-                             Padding="0,4,0,12"
-                             Spacing="8"
-                             BackgroundColor="{StaticResource Background}">
-            <Button Text="1. Создать короб"
-                    Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="52"
+        <Grid Grid.Row="3"
+              Padding="8,4,8,12"
+              ColumnDefinitions="*,*"
+              ColumnSpacing="8"
+              BackgroundColor="{StaticResource Background}">
+            <Button Text="Создать короб"
+                    Style="{StaticResource CompactMenuButtonStyle}"
                     Command="{Binding CreateCommand}" />
-            <Button Text="0. Назад"
-                    Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="52"
-                    Margin="7,0"
+            <Button Grid.Column="1"
+                    Text="Назад"
+                    Style="{StaticResource CompactMenuButtonStyle}"
                     Command="{Binding BackCommand}" />
-        </VerticalStackLayout>
+        </Grid>
 
     </Grid>
 
