@@ -330,11 +330,10 @@ public sealed partial class SettingsViewModel : ObservableObject
         try
         {
             var settings = new ApiSettings(Server, Login, Password);
-            await _apiSettings.SaveAsync(settings);
 
             var ok = await _apiClient.TestConnectionAsync(settings);
             StatusMessage = ok
-                ? "Подключение к Электронному знаку (Datamark) установлено."
+                ? "Подключение к Электронному знаку (Datamark) установлено. Нажмите «Сохранить», чтобы запомнить."
                 : "Не удалось подключиться к Электронному знаку (Datamark).";
             await _dialogs.ShowAlertAsync("Электронный знак", StatusMessage);
         }
@@ -764,11 +763,12 @@ public sealed partial class SettingsViewModel : ObservableObject
         try
         {
             var settings = BuildSmbSettings();
-            await _smbSettings.SaveAsync(settings);
 
             var result = await _smbTransfer.TestConnectionAsync(settings);
-            SmbStatusMessage = result.Message;
-            await _dialogs.ShowAlertAsync("Компьютер", result.Message);
+            SmbStatusMessage = result.Success
+                ? result.Message + " Нажмите «Сохранить», чтобы запомнить."
+                : result.Message;
+            await _dialogs.ShowAlertAsync("Компьютер", SmbStatusMessage);
         }
         catch (Exception ex)
         {

@@ -167,6 +167,17 @@
         <Setter Property="BorderColor" Value="{StaticResource Danger}" />
     </Style>
 
+    <Style x:Key="SubtleImageButtonStyle" TargetType="ImageButton">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="BorderWidth" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="WidthRequest" Value="44" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="Aspect" Value="AspectFit" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
     <Style x:Key="CapacityButtonStyle" TargetType="Button">
         <Setter Property="TextColor" Value="{StaticResource PrimaryDark}" />
         <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />

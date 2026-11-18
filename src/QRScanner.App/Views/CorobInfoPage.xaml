@@ -62,10 +62,9 @@
                              Spacing="8"
                              BackgroundColor="{StaticResource Background}">
             <Button Text="Удалить марку"
-                    Style="{StaticResource MenuButtonStyle}"
-                    HeightRequest="52"
-                    BackgroundColor="{StaticResource Danger}"
-                    TextColor="{StaticResource White}"
+                    Style="{StaticResource CompactMenuButtonStyle}"
+                    HeightRequest="48"
+                    TextColor="{StaticResource Danger}"
                     IsVisible="{Binding HasResult}"
                     Command="{Binding DeleteCommand}" />
 

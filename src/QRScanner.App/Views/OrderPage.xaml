@@ -75,15 +75,12 @@
                                                Style="{StaticResource ListMetaLabel}" />
                                     </VerticalStackLayout>
 
-                                    <Button Grid.Column="1"
-                                            Text="🗑"
-                                            WidthRequest="48"
-                                            MinimumWidthRequest="48"
-                                            FontSize="22"
-                                            Style="{StaticResource SmallDangerButtonStyle}"
-                                            SemanticProperties.Description="Удалить марку"
-                                            Command="{Binding Path=BindingContext.DeleteLineCommand, Source={x:Reference Root}}"
-                                            CommandParameter="{Binding}" />
+                                    <ImageButton Grid.Column="1"
+                                                 Source="trash.svg"
+                                                 Style="{StaticResource SubtleImageButtonStyle}"
+                                                 SemanticProperties.Description="Удалить марку"
+                                                 Command="{Binding Path=BindingContext.DeleteLineCommand, Source={x:Reference Root}}"
+                                                 CommandParameter="{Binding}" />
                                 </Grid>
                             </Border>
                         </DataTemplate>

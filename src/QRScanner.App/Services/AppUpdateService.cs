@@ -82,12 +82,12 @@ public sealed class AppUpdateService : IAppUpdateService
 
             update = ParseManifest(text);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return new AppUpdateCheckResult(
                 false,
                 false,
-                $"Файл version.json повреждён: {ex.Message}");
+                "Файл version.json повреждён. Проверьте формат JSON.");
         }
 
         if (update is null)

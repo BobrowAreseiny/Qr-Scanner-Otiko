@@ -366,7 +366,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             await _dialogs.ShowAlertAsync(
                 "QR-код",
                 $"{(result.Created ? "Файл сохранён" : "Файл уже был сохранён")}:\n{result.DisplayPath}\n\n" +
-                "Для отправки на компьютер нажмите «Отправить на компьютер» в разделе «Отгрузка».",
+                "Для отправки на компьютер нажмите «Отправка» на главном экране.",
                 "OK");
         }
         catch (Exception ex)
