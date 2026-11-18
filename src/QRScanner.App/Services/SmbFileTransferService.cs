@@ -15,16 +15,31 @@ public interface ISmbFileTransferService
         SmbConnectionSettings settings,
         string fileName,
         Stream content,
+        CancellationToken cancellationToken = default,
+        bool skipIfExists = false);
+
+    Task<SmbDownloadResult> DownloadAsync(
+        SmbConnectionSettings settings,
+        string remoteFolder,
+        string remoteFileName,
+        Stream destination,
         CancellationToken cancellationToken = default);
 }
 
-public sealed record SmbOperationResult(bool Success, string Message);
+public sealed record SmbOperationResult(
+    bool Success,
+    string Message,
+    bool Skipped = false);
+
+public sealed record SmbDownloadResult(bool Success, string Message, long Size);
 
 public sealed class SmbFileTransferService : ISmbFileTransferService
 {
     private const string OrdersFolder = "Заказы";
     private const string QrFolder = "QR-коды";
     private const int MaxFileSize = 50 * 1024 * 1024;
+    private const long MaxDownloadSize = 200 * 1024 * 1024;
+    private const int ResponseTimeoutMilliseconds = 15000;
 
     public Task<SmbOperationResult> TestConnectionAsync(
         SmbConnectionSettings settings,
@@ -39,10 +54,33 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
         SmbConnectionSettings settings,
         string fileName,
         Stream content,
+        CancellationToken cancellationToken = default,
+        bool skipIfExists = false)
+    {
+        return Task.Run(
+            () => UploadCore(
+                settings.Normalize(),
+                fileName,
+                content,
+                skipIfExists,
+                cancellationToken),
+            cancellationToken);
+    }
+
+    public Task<SmbDownloadResult> DownloadAsync(
+        SmbConnectionSettings settings,
+        string remoteFolder,
+        string remoteFileName,
+        Stream destination,
         CancellationToken cancellationToken = default)
     {
         return Task.Run(
-            () => UploadCore(settings.Normalize(), fileName, content, cancellationToken),
+            () => DownloadCore(
+                settings.Normalize(),
+                remoteFolder,
+                remoteFileName,
+                destination,
+                cancellationToken),
             cancellationToken);
     }
 
@@ -67,7 +105,7 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            client = new SMB2Client();
+            client = new SMB2Client(ResponseTimeoutMilliseconds);
             if (!IPAddress.TryParse(settings.Server, out var address))
             {
                 return new SmbOperationResult(
@@ -87,7 +125,9 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
             var status = Login(client, settings);
             if (status != NTStatus.STATUS_SUCCESS)
             {
-                return new SmbOperationResult(false, Describe(status));
+                return new SmbOperationResult(
+                    false,
+                    "Не удалось войти на компьютер: " + Describe(status));
             }
 
             loggedIn = true;
@@ -95,7 +135,9 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
             fileStore = client.TreeConnect(settings.Share, out status);
             if (status != NTStatus.STATUS_SUCCESS || fileStore is null)
             {
-                return new SmbOperationResult(false, Describe(status));
+                return new SmbOperationResult(
+                    false,
+                    $"Не удалось открыть папку «{settings.Share}»: " + Describe(status));
             }
 
             var data = System.Text.Encoding.UTF8.GetBytes("QRScanner test");
@@ -112,7 +154,9 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
 
             if (status != NTStatus.STATUS_SUCCESS)
             {
-                return new SmbOperationResult(false, Describe(status));
+                return new SmbOperationResult(
+                    false,
+                    "Не удалось создать тестовый файл: " + Describe(status));
             }
 
             status = fileStore.WriteFile(out _, handle, 0, data);
@@ -120,7 +164,9 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
 
             if (status != NTStatus.STATUS_SUCCESS)
             {
-                return new SmbOperationResult(false, Describe(status));
+                return new SmbOperationResult(
+                    false,
+                    "Не удалось записать тестовый файл: " + Describe(status));
             }
 
             TryDelete(fileStore, testPath);
@@ -170,6 +216,7 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
         SmbConnectionSettings settings,
         string fileName,
         Stream content,
+        bool skipIfExists,
         CancellationToken cancellationToken)
     {
         var validation = Validate(settings);
@@ -215,7 +262,7 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
 
             var data = memory.ToArray();
 
-            client = new SMB2Client();
+            client = new SMB2Client(ResponseTimeoutMilliseconds);
             if (!IPAddress.TryParse(settings.Server, out var address))
             {
                 return new SmbOperationResult(
@@ -235,7 +282,9 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
             var status = Login(client, settings);
             if (status != NTStatus.STATUS_SUCCESS)
             {
-                return new SmbOperationResult(false, Describe(status));
+                return new SmbOperationResult(
+                    false,
+                    "Не удалось войти на компьютер: " + Describe(status));
             }
 
             loggedIn = true;
@@ -243,7 +292,41 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
             fileStore = client.TreeConnect(settings.Share, out status);
             if (status != NTStatus.STATUS_SUCCESS || fileStore is null)
             {
-                return new SmbOperationResult(false, Describe(status));
+                return new SmbOperationResult(
+                    false,
+                    $"Не удалось открыть папку «{settings.Share}»: " + Describe(status));
+            }
+
+            if (skipIfExists)
+            {
+                var existingStatus = fileStore.CreateFile(
+                    out var existingHandle,
+                    out _,
+                    remotePath,
+                    AccessMask.GENERIC_READ | AccessMask.SYNCHRONIZE,
+                    SMBLibrary.FileAttributes.Normal,
+                    ShareAccess.Read,
+                    CreateDisposition.FILE_OPEN,
+                    CreateOptions.FILE_NON_DIRECTORY_FILE | CreateOptions.FILE_SYNCHRONOUS_IO_ALERT,
+                    null);
+
+                if (existingStatus == NTStatus.STATUS_SUCCESS)
+                {
+                    fileStore.CloseFile(existingHandle);
+                    return new SmbOperationResult(
+                        true,
+                        $"Файл «{safeName}» уже есть на компьютере.",
+                        Skipped: true);
+                }
+
+                if (existingStatus != NTStatus.STATUS_OBJECT_NAME_NOT_FOUND &&
+                    existingStatus != NTStatus.STATUS_OBJECT_PATH_NOT_FOUND)
+                {
+                    return new SmbOperationResult(
+                        false,
+                        $"Не удалось проверить файл «{safeName}»: " +
+                        Describe(existingStatus));
+                }
             }
 
             status = fileStore.CreateFile(
@@ -259,7 +342,10 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
 
             if (status != NTStatus.STATUS_SUCCESS)
             {
-                return new SmbOperationResult(false, Describe(status));
+                return new SmbOperationResult(
+                    false,
+                    $"Не удалось открыть файл «{remotePath}» на компьютере: " +
+                    Describe(status));
             }
 
             var offset = 0L;
@@ -281,7 +367,10 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
                 if (status != NTStatus.STATUS_SUCCESS)
                 {
                     fileStore.CloseFile(handle);
-                    return new SmbOperationResult(false, Describe(status));
+                    return new SmbOperationResult(
+                        false,
+                        $"Не удалось записать файл «{safeName}»: " +
+                        Describe(status));
                 }
 
                 offset += count;
@@ -299,6 +388,194 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
         catch (Exception ex)
         {
             return new SmbOperationResult(false, $"Ошибка SMB: {ex.Message}");
+        }
+        finally
+        {
+            fileStore?.Disconnect();
+
+            if (loggedIn)
+            {
+                try
+                {
+                    client?.Logoff();
+                }
+                catch
+                {
+                    // Ignore cleanup errors.
+                }
+            }
+
+            if (connected)
+            {
+                try
+                {
+                    client?.Disconnect();
+                }
+                catch
+                {
+                    // Ignore cleanup errors.
+                }
+            }
+        }
+    }
+
+    private static SmbDownloadResult DownloadCore(
+        SmbConnectionSettings settings,
+        string remoteFolder,
+        string remoteFileName,
+        Stream destination,
+        CancellationToken cancellationToken)
+    {
+        var validation = Validate(settings);
+        if (validation is not null)
+        {
+            return new SmbDownloadResult(false, validation, 0);
+        }
+
+        var folder = SanitizeFolder(remoteFolder);
+        var safeName = SanitizeFileName(remoteFileName);
+        var remotePath = string.IsNullOrEmpty(folder)
+            ? safeName
+            : folder + "\\" + safeName;
+
+        SMB2Client? client = null;
+        var connected = false;
+        var loggedIn = false;
+        ISMBFileStore? fileStore = null;
+
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            client = new SMB2Client(ResponseTimeoutMilliseconds);
+            if (!IPAddress.TryParse(settings.Server, out var address))
+            {
+                return new SmbDownloadResult(
+                    false,
+                    "Укажите IP-адрес компьютера, например 192.168.0.15.",
+                    0);
+            }
+
+            if (!client.Connect(address, SMBTransportType.DirectTCPTransport))
+            {
+                return new SmbDownloadResult(
+                    false,
+                    "Компьютер не отвечает по SMB. Проверьте сеть и порт 445.",
+                    0);
+            }
+
+            connected = true;
+
+            var status = Login(client, settings);
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                return new SmbDownloadResult(
+                    false,
+                    "Не удалось войти на компьютер: " + Describe(status),
+                    0);
+            }
+
+            loggedIn = true;
+
+            fileStore = client.TreeConnect(settings.Share, out status);
+            if (status != NTStatus.STATUS_SUCCESS || fileStore is null)
+            {
+                return new SmbDownloadResult(
+                    false,
+                    $"Не удалось открыть папку «{settings.Share}»: " + Describe(status),
+                    0);
+            }
+
+            status = fileStore.CreateFile(
+                out var handle,
+                out _,
+                remotePath,
+                AccessMask.GENERIC_READ | AccessMask.SYNCHRONIZE,
+                SMBLibrary.FileAttributes.Normal,
+                ShareAccess.Read,
+                CreateDisposition.FILE_OPEN,
+                CreateOptions.FILE_NON_DIRECTORY_FILE | CreateOptions.FILE_SYNCHRONOUS_IO_ALERT,
+                null);
+
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                var message = status == NTStatus.STATUS_OBJECT_NAME_NOT_FOUND
+                    ? $"На компьютере нет файла «{remotePath}»."
+                    : $"Не удалось открыть файл «{remotePath}»: " + Describe(status);
+                return new SmbDownloadResult(false, message, 0);
+            }
+
+            status = fileStore.GetFileInformation(
+                out var fileInfo,
+                handle,
+                FileInformationClass.FileStandardInformation);
+
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                fileStore.CloseFile(handle);
+                return new SmbDownloadResult(
+                    false,
+                    "Не удалось получить размер файла: " + Describe(status),
+                    0);
+            }
+
+            var size = ((FileStandardInformation)fileInfo).EndOfFile;
+            if (size > MaxDownloadSize)
+            {
+                fileStore.CloseFile(handle);
+                return new SmbDownloadResult(
+                    false,
+                    "Файл слишком большой для обновления.",
+                    0);
+            }
+
+            var offset = 0L;
+            var chunkSize = (int)client.MaxReadSize;
+            if (chunkSize <= 0)
+            {
+                chunkSize = 64 * 1024;
+            }
+
+            while (offset < size)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var count = (int)Math.Min(chunkSize, size - offset);
+                status = fileStore.ReadFile(out var chunk, handle, offset, count);
+                if (status != NTStatus.STATUS_SUCCESS)
+                {
+                    fileStore.CloseFile(handle);
+                    return new SmbDownloadResult(
+                        false,
+                        $"Не удалось прочитать файл «{safeName}»: " +
+                        Describe(status),
+                        0);
+                }
+
+                if (chunk.Length == 0)
+                {
+                    break;
+                }
+
+                destination.Write(chunk, 0, chunk.Length);
+                offset += chunk.Length;
+            }
+
+            fileStore.CloseFile(handle);
+            destination.Flush();
+
+            return new SmbDownloadResult(
+                true,
+                $"Файл «{safeName}» получен с компьютера.",
+                offset);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return new SmbDownloadResult(false, $"Ошибка SMB: {ex.Message}", 0);
         }
         finally
         {
@@ -397,6 +674,20 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
             NTStatus.STATUS_OBJECT_NAME_NOT_FOUND => "Папка не найдена на компьютере.",
             _ => $"Ошибка SMB: {status}."
         };
+    }
+
+    private static string SanitizeFolder(string folder)
+    {
+        var value = (folder ?? string.Empty)
+            .Replace('/', '\\')
+            .Trim('\\', ' ');
+
+        if (value.Contains("..", StringComparison.Ordinal))
+        {
+            return string.Empty;
+        }
+
+        return value;
     }
 
     private static string SanitizeFileName(string fileName)

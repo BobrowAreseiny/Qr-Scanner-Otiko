@@ -15,11 +15,12 @@ public partial class HomePage : ContentPage
         _keyboard = keyboard;
     }
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
         _keyboard.ShortcutPressed -= OnShortcut;
         _keyboard.ShortcutPressed += OnShortcut;
+        await _viewModel.LoadAsync();
     }
 
     protected override void OnDisappearing()
@@ -39,7 +40,7 @@ public partial class HomePage : ContentPage
                 _viewModel.OpenShipmentCommand.Execute(null);
                 break;
             case 3:
-                _viewModel.OpenHistoryCommand.Execute(null);
+                _viewModel.SendToComputerCommand.Execute(null);
                 break;
             case 4:
                 _viewModel.OpenSettingsCommand.Execute(null);

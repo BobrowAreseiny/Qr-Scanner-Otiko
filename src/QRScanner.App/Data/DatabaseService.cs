@@ -44,6 +44,8 @@ public interface IDatabaseService
 
     Task DeleteTransferAsync(int id);
 
+    Task MarkOrderSentToComputerAsync(int orderId);
+
     Task<OrderEntity?> GetOrderAsync(int id);
 
     Task<IReadOnlyList<OrderLineEntity>> GetOrderLinesAsync(int orderId);
@@ -340,6 +342,21 @@ public sealed class DatabaseService : IDatabaseService
     {
         var connection = await GetConnectionAsync();
         await connection.DeleteAsync<TransferQueueEntity>(id);
+    }
+
+    public async Task MarkOrderSentToComputerAsync(int orderId)
+    {
+        var connection = await GetConnectionAsync();
+        var order = await connection.Table<OrderEntity>()
+            .FirstOrDefaultAsync(item => item.Id == orderId);
+
+        if (order is null)
+        {
+            return;
+        }
+
+        order.IsSentToComputer = true;
+        await connection.UpdateAsync(order);
     }
 
     public async Task<OrderEntity?> GetOrderAsync(int id)

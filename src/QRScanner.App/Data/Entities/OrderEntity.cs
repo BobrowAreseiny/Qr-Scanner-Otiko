@@ -14,6 +14,8 @@ public sealed class OrderEntity
 
     public bool IsShipped { get; set; }
 
+    public bool IsSentToComputer { get; set; }
+
     public bool IsExported { get; set; }
 
     public DateTime? ExportedAtUtc { get; set; }

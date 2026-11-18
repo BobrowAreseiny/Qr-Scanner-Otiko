@@ -8,7 +8,8 @@ namespace QRScanner.App.Services;
 
 public sealed class OrderFileExporter : IOrderFileExporter
 {
-    private const string PublicSubfolder = "Otiko";
+    private const string PublicRoot = "Otiko";
+    private const string OrdersSubfolder = "Otiko/Заказы";
     private const string MediaIdColumn = "_id";
 
     public async Task<OrderFileExportResult> ExportAsync(
@@ -31,7 +32,7 @@ public sealed class OrderFileExporter : IOrderFileExporter
             }
         }
 
-        var directory = Path.Combine(FileSystem.AppDataDirectory, PublicSubfolder);
+        var directory = Path.Combine(FileSystem.AppDataDirectory, OrdersSubfolder);
         var path = await OrderExportWriter.WriteAsync(
             directory,
             orderName,
@@ -86,7 +87,7 @@ public sealed class OrderFileExporter : IOrderFileExporter
 
         var selectionArgs = new[]
         {
-            $"{Android.OS.Environment.DirectoryDownloads}/{PublicSubfolder}/%",
+            $"{Android.OS.Environment.DirectoryDownloads}/{PublicRoot}/%",
             "%.txt",
             "%.png",
             threshold
@@ -143,22 +144,22 @@ public sealed class OrderFileExporter : IOrderFileExporter
         values.Put(MediaStore.IMediaColumns.MimeType, "text/plain");
         values.Put(
             MediaStore.IMediaColumns.RelativePath,
-            $"{Android.OS.Environment.DirectoryDownloads}/{PublicSubfolder}");
+            $"{Android.OS.Environment.DirectoryDownloads}/{OrdersSubfolder}");
 
         var uri = resolver.Insert(MediaStore.Downloads.ExternalContentUri, values)
             ?? throw new InvalidOperationException(
-                "Не удалось создать файл в папке Download/Otiko.");
+                "Не удалось создать файл в папке Download/Otiko/Заказы.");
 
         await using (var stream = resolver.OpenOutputStream(uri)
             ?? throw new InvalidOperationException(
-                "Не удалось открыть файл в папке Download/Otiko."))
+                "Не удалось открыть файл в папке Download/Otiko/Заказы."))
         {
             await OrderExportWriter.WriteAsync(stream, codes, cancellationToken);
         }
 
         return new OrderFileExportResult(
             fileName,
-            $"Download/{PublicSubfolder}/{fileName}",
+            $"Download/{OrdersSubfolder}/{fileName}",
             uri.ToString() ?? string.Empty,
             IsPublic: true);
     }

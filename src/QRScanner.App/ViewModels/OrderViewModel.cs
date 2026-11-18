@@ -368,7 +368,8 @@ public sealed partial class OrderViewModel : ObservableObject
                 await _transferQueue.EnqueueAsync(
                     export.Location,
                     export.FileName,
-                    TransferKinds.Order);
+                    TransferKinds.Order,
+                    order.Id);
                 queueNote = " Добавлено в очередь на компьютер.";
             }
             catch (Exception ex)

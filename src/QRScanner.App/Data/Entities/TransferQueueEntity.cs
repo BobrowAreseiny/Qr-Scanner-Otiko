@@ -14,6 +14,8 @@ public sealed class TransferQueueEntity
 
     public string Kind { get; set; } = string.Empty;
 
+    public int? ReferenceId { get; set; }
+
     public string Status { get; set; } = "pending";
 
     public int Attempts { get; set; }

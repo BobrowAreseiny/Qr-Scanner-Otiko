@@ -6,7 +6,7 @@
              Title="Настройки"
              Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="40,*"
+    <Grid RowDefinitions="40,3,*"
           BackgroundColor="{StaticResource Background}">
 
         <controls:AppToolbar Grid.Row="0"
@@ -14,304 +14,284 @@
                              ShowBack="True"
                              BackCommand="{Binding BackCommand}" />
 
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="16,12,16,24" Spacing="12">
+        <BoxView Grid.Row="1"
+                 Style="{StaticResource ThinDivider}" />
 
-                <Border Style="{StaticResource CardStyle}" Margin="0">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="ЭЛЕКТРОННЫЙ ЗНАК (DATAMARK)"
-                               Style="{StaticResource SectionHeaderLabel}"
-                               Margin="0,0,0,2" />
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16,12,16,16" Spacing="12">
 
-                        <Label Text="Сервер" Style="{StaticResource SettingLabel}" />
-                        <Border BackgroundColor="{StaticResource Surface}"
-                                Stroke="{StaticResource Border}"
-                                StrokeThickness="1"
-                                StrokeShape="Rectangle"
-                                Padding="10,0">
-                            <Entry Text="{Binding Server, Mode=TwoWay}"
-                                   Placeholder="https://api.datamark.by/" />
-                        </Border>
+                <Label Text="РАЗДЕЛЫ"
+                       Style="{StaticResource SectionHeaderLabel}"
+                       Margin="0,0,0,0" />
 
-                        <Label Text="Логин" Style="{StaticResource SettingLabel}" />
-                        <Border BackgroundColor="{StaticResource Surface}"
-                                Stroke="{StaticResource Border}"
-                                StrokeThickness="1"
-                                StrokeShape="Rectangle"
-                                Padding="10,0">
-                            <Entry Text="{Binding Login, Mode=TwoWay}"
-                                   Placeholder="Логин Электронного знака" />
-                        </Border>
+                <Grid ColumnDefinitions="*,*"
+                      RowDefinitions="Auto,Auto,Auto,Auto"
+                      ColumnSpacing="12"
+                      RowSpacing="12">
 
-                        <Label Text="Пароль" Style="{StaticResource SettingLabel}" />
-                        <Border BackgroundColor="{StaticResource Surface}"
-                                Stroke="{StaticResource Border}"
-                                StrokeThickness="1"
-                                StrokeShape="Rectangle"
-                                Padding="10,0">
-                            <Entry Text="{Binding Password, Mode=TwoWay}"
-                                   IsPassword="{Binding IsPasswordHidden}"
-                                   Placeholder="Пароль Электронного знака" />
-                        </Border>
-
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                            <Switch IsToggled="{Binding IsPasswordVisible}"
-                                    SemanticProperties.Description="Показать пароль" />
-                            <Label Grid.Column="1"
-                                   Text="Показать пароль"
-                                   FontSize="16"
-                                   VerticalOptions="Center" />
+                    <Border Grid.Row="0"
+                            Grid.Column="0"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Электронный знак Datamark">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenSectionCommand}"
+                                                  CommandParameter="datamark" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="settings_datamark.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="Datamark"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="{Binding DatamarkSummaryText}"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
                         </Grid>
+                    </Border>
 
-                        <Grid ColumnDefinitions="*,*"
-                              ColumnSpacing="8"
-                              Margin="0,4,0,0">
-                            <Button Text="Проверить"
-                                    Style="{StaticResource CompactMenuButtonStyle}"
-                                    Command="{Binding TestCommand}" />
-                            <Button Grid.Column="1"
-                                    Text="Сохранить"
-                                    Style="{StaticResource CompactMenuButtonStyle}"
-                                    Command="{Binding SaveCommand}" />
+                    <Border Grid.Row="0"
+                            Grid.Column="1"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Обмен с 1С">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenOneCSettingsCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="settings_1c.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="1С"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="Обмен заказами"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
                         </Grid>
+                    </Border>
 
-                        <Label Text="{Binding StatusMessage}"
-                               Style="{StaticResource BodyLabel}" />
-                        <Label Text="Логин и пароль хранятся в защищённом хранилище Android."
-                               Style="{StaticResource BodyLabel}" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Style="{StaticResource CardStyle}" Margin="0">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="1С"
-                               Style="{StaticResource SectionHeaderLabel}"
-                               Margin="0,0,0,0" />
-                        <Label Text="Обмен заказами по HTTP API."
-                               Style="{StaticResource BodyLabel}" />
-                        <Button Text="Настройки подключения"
-                                Style="{StaticResource CompactMenuButtonStyle}"
-                                Command="{Binding OpenOneCSettingsCommand}" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Style="{StaticResource CardStyle}" Margin="0">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="КОМПЬЮТЕР (SMB)"
-                               Style="{StaticResource SectionHeaderLabel}"
-                               Margin="0,0,0,2" />
-
-                        <Label Text="Сервер" Style="{StaticResource SettingLabel}" />
-                        <Border BackgroundColor="{StaticResource Surface}"
-                                Stroke="{StaticResource Border}"
-                                StrokeThickness="1"
-                                StrokeShape="Rectangle"
-                                Padding="10,0">
-                            <Entry Text="{Binding SmbServer, Mode=TwoWay}"
-                                   Placeholder="192.168.0.15" />
-                        </Border>
-
-                        <Label Text="Общая папка" Style="{StaticResource SettingLabel}" />
-                        <Border BackgroundColor="{StaticResource Surface}"
-                                Stroke="{StaticResource Border}"
-                                StrokeThickness="1"
-                                StrokeShape="Rectangle"
-                                Padding="10,0">
-                            <Entry Text="{Binding SmbShare, Mode=TwoWay}"
-                                   Placeholder="QRScanner" />
-                        </Border>
-
-                        <Label Text="Пользователь" Style="{StaticResource SettingLabel}" />
-                        <Border BackgroundColor="{StaticResource Surface}"
-                                Stroke="{StaticResource Border}"
-                                StrokeThickness="1"
-                                StrokeShape="Rectangle"
-                                Padding="10,0">
-                            <Entry Text="{Binding SmbLogin, Mode=TwoWay}"
-                                   Placeholder="BEAVER-JR\qrscanner" />
-                        </Border>
-
-                        <Label Text="Пароль" Style="{StaticResource SettingLabel}" />
-                        <Border BackgroundColor="{StaticResource Surface}"
-                                Stroke="{StaticResource Border}"
-                                StrokeThickness="1"
-                                StrokeShape="Rectangle"
-                                Padding="10,0">
-                            <Entry Text="{Binding SmbPassword, Mode=TwoWay}"
-                                   IsPassword="{Binding IsSmbPasswordHidden}"
-                                   Placeholder="Пароль пользователя" />
-                        </Border>
-
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                            <Switch IsToggled="{Binding IsSmbPasswordVisible}"
-                                    SemanticProperties.Description="Показать пароль SMB" />
-                            <Label Grid.Column="1"
-                                   Text="Показать пароль"
-                                   FontSize="16"
-                                   VerticalOptions="Center" />
+                    <Border Grid.Row="1"
+                            Grid.Column="0"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Компьютер SMB">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenSectionCommand}"
+                                                  CommandParameter="smb" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="home_send.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="Компьютер"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="{Binding SmbSummaryText}"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
                         </Grid>
+                    </Border>
 
-                        <Grid ColumnDefinitions="*,*"
-                              ColumnSpacing="8"
-                              Margin="0,4,0,0">
-                            <Button Text="Проверить"
-                                    Style="{StaticResource CompactMenuButtonStyle}"
-                                    Command="{Binding TestSmbCommand}" />
-                            <Button Grid.Column="1"
-                                    Text="Сохранить"
-                                    Style="{StaticResource CompactMenuButtonStyle}"
-                                    Command="{Binding SaveSmbCommand}" />
+                    <Border Grid.Row="1"
+                            Grid.Column="1"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Обновление приложения">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenSectionCommand}"
+                                                  CommandParameter="update" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="settings_update.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="Обновление"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="{Binding CurrentVersionText}"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
                         </Grid>
+                    </Border>
 
-                        <Button Text="Импорт из файла"
-                                Style="{StaticResource CompactMenuButtonStyle}"
-                                Command="{Binding ImportSmbCommand}" />
-
-                        <Label Text="Скопируйте QRScanner-access.txt в Download или в папку приложения по USB."
-                               Style="{StaticResource BodyLabel}" />
-                        <Label Text="{Binding SmbStatusMessage}"
-                               Style="{StaticResource BodyLabel}" />
-                        <Label Text="Файлы: C:\QRScanner\Заказы и C:\QRScanner\QR-коды."
-                               Style="{StaticResource BodyLabel}" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Style="{StaticResource CardStyle}" Margin="0">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="БЕЗОПАСНОСТЬ"
-                               Style="{StaticResource SectionHeaderLabel}"
-                               Margin="0,0,0,2" />
-
-                        <Grid ColumnDefinitions="*,Auto">
-                            <Label Text="Шифрование БД" Style="{StaticResource SettingLabel}" />
-                            <Label Grid.Column="1"
-                                   Text="SQLCipher"
-                                   Style="{StaticResource SettingValueLabel}" />
+                    <Border Grid.Row="2"
+                            Grid.Column="0"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Безопасность и код восстановления">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenSectionCommand}"
+                                                  CommandParameter="security" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="settings_security.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="Защита"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="Код восстановления"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
                         </Grid>
+                    </Border>
 
-                        <BoxView Style="{StaticResource SettingRowSeparator}" />
-
-                        <Label Text="Код восстановления"
-                               Style="{StaticResource SettingLabel}" />
-
-                        <Grid ColumnDefinitions="*,*"
-                              RowDefinitions="Auto,Auto"
-                              ColumnSpacing="8"
-                              RowSpacing="8">
-                            <Button Text="Показать"
-                                    Style="{StaticResource SmallButtonStyle}"
-                                    Command="{Binding ShowRecoveryCodeCommand}" />
-                            <Button Grid.Column="1"
-                                    Text="Копировать"
-                                    Style="{StaticResource SmallButtonStyle}"
-                                    Command="{Binding CopyRecoveryCodeCommand}" />
-                            <Button Grid.Row="1"
-                                    Grid.ColumnSpan="2"
-                                    Text="Сохранить в файл"
-                                    Style="{StaticResource SmallButtonStyle}"
-                                    Command="{Binding SaveRecoveryCodeCommand}" />
+                    <Border Grid.Row="2"
+                            Grid.Column="1"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Резервные копии">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenSectionCommand}"
+                                                  CommandParameter="backups" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="settings_backup.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="Копии"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="{Binding BackupSummaryText}"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
                         </Grid>
+                    </Border>
 
-                        <Label Text="{Binding RecoveryCode}"
-                               IsVisible="{Binding IsRecoveryCodeVisible}"
-                               FontSize="16"
-                               TextColor="{StaticResource TextPrimary}"
-                               LineBreakMode="CharacterWrap" />
-
-                        <Label Text="{Binding RecoveryStatusMessage}"
-                               Style="{StaticResource BodyLabel}" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Style="{StaticResource CardStyle}" Margin="0">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="РЕЗЕРВНЫЕ КОПИИ"
-                               Style="{StaticResource SectionHeaderLabel}"
-                               Margin="0,0,0,0" />
-                        <Label Text="{Binding LastBackupText}"
-                               Style="{StaticResource BodyLabel}" />
-
-                        <Grid ColumnDefinitions="*,*"
-                              RowDefinitions="Auto,Auto"
-                              ColumnSpacing="8"
-                              RowSpacing="8">
-                            <Button Text="Создать копию"
-                                    Style="{StaticResource SmallButtonStyle}"
-                                    Command="{Binding CreateBackupCommand}" />
-                            <Button Grid.Column="1"
-                                    Text="В файл"
-                                    Style="{StaticResource SmallButtonStyle}"
-                                    Command="{Binding SaveBackupCommand}" />
-                            <Button Grid.Row="1"
-                                    Grid.ColumnSpan="2"
-                                    Text="Восстановить из файла"
-                                    Style="{StaticResource SmallButtonStyle}"
-                                    Command="{Binding RestoreBackupCommand}" />
+                    <Border Grid.Row="3"
+                            Grid.Column="0"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Файлы и очистка">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenSectionCommand}"
+                                                  CommandParameter="files" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="settings_files.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="Файлы"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="Очистка старых файлов"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
                         </Grid>
+                    </Border>
 
-                        <Label Text="{Binding BackupStatusMessage}"
-                               Style="{StaticResource BodyLabel}" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Style="{StaticResource CardStyle}" Margin="0">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="ФАЙЛЫ"
-                               Style="{StaticResource SectionHeaderLabel}"
-                               Margin="0,0,0,2" />
-                        <Label Text="Заказы и QR: Download/Otiko"
-                               Style="{StaticResource SettingLabel}" />
-                        <Label Text="Очистка удаляет только .txt и .png старше 30 дней. База, короба и марки не затрагиваются."
-                               Style="{StaticResource BodyLabel}" />
-                        <Button Text="Очистить старые файлы"
-                                Style="{StaticResource CompactMenuButtonStyle}"
-                                Command="{Binding CleanupFilesCommand}" />
-                        <Label Text="{Binding FileCleanupStatusMessage}"
-                               Style="{StaticResource BodyLabel}" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Style="{StaticResource CardStyle}" Margin="0">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="ПЕРЕНОС СТАРОЙ БАЗЫ"
-                               Style="{StaticResource SectionHeaderLabel}"
-                               Margin="0,0,0,0" />
-                        <Label Text="Файл barcode.db. Импорт только в пустую базу."
-                               Style="{StaticResource BodyLabel}" />
-                        <Button Text="Импортировать"
-                                Style="{StaticResource CompactMenuButtonStyle}"
-                                Command="{Binding ImportLegacyDatabaseCommand}" />
-                        <Label Text="{Binding LegacyImportStatusMessage}"
-                               Style="{StaticResource BodyLabel}" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Style="{StaticResource CardStyle}" Margin="0">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="О ПРОГРАММЕ"
-                               Style="{StaticResource SectionHeaderLabel}"
-                               Margin="0,0,0,2" />
-
-                        <Grid ColumnDefinitions="*,Auto">
-                            <Label Text="Версия" Style="{StaticResource SettingLabel}" />
-                            <Label Grid.Column="1"
-                                   Text="1.0.0"
-                                   Style="{StaticResource SettingValueLabel}" />
+                    <Border Grid.Row="3"
+                            Grid.Column="1"
+                            Style="{StaticResource CardStyle}"
+                            Padding="14"
+                            Margin="0"
+                            MinimumHeightRequest="150"
+                            SemanticProperties.Description="Перенос старой базы">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenSectionCommand}"
+                                                  CommandParameter="legacy" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+                            <Image Source="settings_legacy.svg"
+                                   WidthRequest="36"
+                                   HeightRequest="36"
+                                   HorizontalOptions="Start"
+                                   Aspect="AspectFit" />
+                            <Label Grid.Row="1"
+                                   Text="Перенос"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="2"
+                                   Text="Импорт barcode.db"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
                         </Grid>
+                    </Border>
+                </Grid>
 
-                        <BoxView Style="{StaticResource SettingRowSeparator}" />
-
-                        <Grid ColumnDefinitions="*,Auto">
-                            <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ShowAboutCommand}" />
-                            </Grid.GestureRecognizers>
-                            <Label Text="О программе" Style="{StaticResource SettingLabel}" />
-                            <Label Grid.Column="1"
-                                   Text="›"
-                                   Style="{StaticResource SettingValueLabel}"
-                                   FontSize="22" />
-                        </Grid>
-                    </VerticalStackLayout>
+                <Border Style="{StaticResource CardStyle}"
+                        Padding="14"
+                        Margin="0">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenSectionCommand}"
+                                              CommandParameter="about" />
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*,Auto"
+                          ColumnSpacing="12"
+                          MinimumHeightRequest="64">
+                        <Image Source="settings_about.svg"
+                               WidthRequest="36"
+                               HeightRequest="36"
+                               VerticalOptions="Center"
+                               Aspect="AspectFit" />
+                        <VerticalStackLayout Grid.Column="1"
+                                             Spacing="2"
+                                             VerticalOptions="Center">
+                            <Label Text="О программе"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Text="{Binding CurrentVersionText}"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextSecondary}" />
+                        </VerticalStackLayout>
+                        <Label Grid.Column="2"
+                               Text="›"
+                               FontSize="24"
+                               TextColor="{StaticResource TextSecondary}"
+                               VerticalOptions="Center" />
+                    </Grid>
                 </Border>
 
             </VerticalStackLayout>

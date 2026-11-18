@@ -48,7 +48,7 @@ public sealed partial class CorobCreateViewModel : ObservableObject
     public IAsyncRelayCommand BackCommand { get; }
 
     public string CapacityText => Capacity > 0
-        ? $"Выбрано: {Capacity} марок"
+        ? $"Выбрано: {RussianPlural.Marks(Capacity)}"
         : "Выбрано: без ограничения";
 
     public Color CapacityStandardBackground => Capacity == 0 ? SelectedBackground : NormalBackground;

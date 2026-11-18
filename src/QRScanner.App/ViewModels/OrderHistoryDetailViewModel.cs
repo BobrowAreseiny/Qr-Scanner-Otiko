@@ -206,7 +206,8 @@ public sealed partial class OrderHistoryDetailViewModel : ObservableObject
                 await _transferQueue.EnqueueAsync(
                     export.Location,
                     export.FileName,
-                    TransferKinds.Order);
+                    TransferKinds.Order,
+                    _order.Id);
                 queueNote = "\n\nДобавлено в очередь на компьютер.";
             }
             catch (Exception ex)

@@ -13,6 +13,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(AggregationPage), typeof(AggregationPage));
         Routing.RegisterRoute(nameof(ShipmentPage), typeof(ShipmentPage));
         Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
+        Routing.RegisterRoute(nameof(SettingsSectionPage), typeof(SettingsSectionPage));
         Routing.RegisterRoute(nameof(OneCSettingsPage), typeof(OneCSettingsPage));
         Routing.RegisterRoute(nameof(LogsPage), typeof(LogsPage));
         Routing.RegisterRoute(nameof(HelpPage), typeof(HelpPage));

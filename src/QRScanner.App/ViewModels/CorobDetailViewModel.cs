@@ -47,7 +47,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             () => _navigation.GoToAsync(nameof(QRScanner.App.Views.SettingsPage)));
         ShareQrCommand = new AsyncRelayCommand(ShareQrAsync);
         SaveQrToFileCommand = new AsyncRelayCommand(SaveQrToFileAsync);
-        QrMenuCommand = new AsyncRelayCommand(ShowQrMenuAsync);
+        QrMenuCommand = new AsyncRelayCommand(SaveQrAsync);
         EditNameCommand = new AsyncRelayCommand(EditNameAsync);
     }
 
@@ -330,6 +330,54 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         }
     }
 
+    private async Task SaveQrAsync()
+    {
+        if (Corob is null)
+        {
+            return;
+        }
+
+        try
+        {
+            StatusMessage = "Сохранение QR-кода...";
+            var result = await _qrCodeService.GetOrCreateAsync(
+                Corob.Id,
+                Corob.Name);
+
+            var queueNote = string.Empty;
+            if (result.IsPublic)
+            {
+                try
+                {
+                    await _transferQueue.EnqueueAsync(
+                        result.Location,
+                        result.FileName,
+                        TransferKinds.Qr);
+                    queueNote = " Добавлен в очередь на компьютер.";
+                }
+                catch (Exception ex)
+                {
+                    queueNote = $" Не удалось добавить в очередь: {ex.Message}";
+                }
+            }
+
+            var prefix = result.Created ? "QR сохранён" : "QR уже сохранён";
+            StatusMessage = $"{prefix}: {result.DisplayPath}.{queueNote}";
+            await _dialogs.ShowAlertAsync(
+                "QR-код",
+                $"{(result.Created ? "Файл сохранён" : "Файл уже был сохранён")}:\n{result.DisplayPath}\n\n" +
+                "Для отправки на компьютер нажмите «Отправить на компьютер» в разделе «Отгрузка».",
+                "OK");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Ошибка QR: {ex.Message}";
+            await _dialogs.ShowAlertAsync(
+                "QR-код",
+                $"Не удалось сохранить QR: {ex.Message}");
+        }
+    }
+
     private async Task ShareQrAsync()
     {
         if (Corob is null)
@@ -481,6 +529,6 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             ? "0"
             : Corob.Capacity > 0
                 ? $"{Barcodes.Count} / {Corob.Capacity}"
-                : $"{Barcodes.Count} марок";
+                : RussianPlural.Marks(Barcodes.Count);
     }
 }

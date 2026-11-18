@@ -1,5 +1,8 @@
 using QRCoder;
 using SkiaSharp;
+using System.Runtime.Versioning;
+using Android.Content;
+using Android.Provider;
 
 namespace QRScanner.App.Services;
 
@@ -38,6 +41,183 @@ public sealed class QrCodeService : IQrCodeService
         var path = Path.Combine(directory, $"{corobId}-{safeName}.png");
         await File.WriteAllBytesAsync(path, pngBytes);
         return path;
+    }
+
+    public async Task<QrFileSaveResult> GetOrCreateAsync(
+        int corobId,
+        string corobName,
+        CancellationToken cancellationToken = default)
+    {
+        var fileName = $"{SanitizeFileName(corobName)}.png";
+
+        if (OperatingSystem.IsAndroidVersionAtLeast(29))
+        {
+            try
+            {
+                var existing = FindInDownloads(fileName);
+                if (existing is not null)
+                {
+                    return existing;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"Не удалось проверить QR в Downloads: {ex}");
+            }
+        }
+
+        var privatePath = Path.Combine(
+            FileSystem.AppDataDirectory,
+            "Otiko",
+            "QR-коды",
+            fileName);
+
+        if (File.Exists(privatePath))
+        {
+            return new QrFileSaveResult(
+                fileName,
+                privatePath,
+                privatePath,
+                IsPublic: false,
+                Created: false);
+        }
+
+        return await SaveToDownloadsAsync(corobId, corobName, cancellationToken);
+    }
+
+    [SupportedOSPlatform("android29.0")]
+    private static QrFileSaveResult? FindInDownloads(string fileName)
+    {
+        var context = Android.App.Application.Context;
+        var resolver = context.ContentResolver;
+        if (resolver is null)
+        {
+            return null;
+        }
+
+        var collection = MediaStore.Downloads.ExternalContentUri;
+        var projection = new[]
+        {
+            "_id",
+            MediaStore.IMediaColumns.RelativePath
+        };
+        var selection = $"{MediaStore.IMediaColumns.DisplayName} = ?";
+
+        using var cursor = resolver.Query(
+            collection,
+            projection,
+            selection,
+            new[] { fileName },
+            sortOrder: null);
+
+        if (cursor is null)
+        {
+            return null;
+        }
+
+        var idColumn = cursor.GetColumnIndexOrThrow("_id");
+        var pathColumn = cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.RelativePath);
+
+        while (cursor.MoveToNext())
+        {
+            var relative = cursor.GetString(pathColumn) ?? string.Empty;
+            var normalized = relative.Replace('\\', '/');
+            if (!normalized.StartsWith(
+                    "Download/Otiko/QR-коды/",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var id = cursor.GetLong(idColumn);
+            var uri = ContentUris.WithAppendedId(collection, id);
+
+            return new QrFileSaveResult(
+                fileName,
+                $"Download/Otiko/QR-коды/{fileName}",
+                uri.ToString() ?? string.Empty,
+                IsPublic: true,
+                Created: false);
+        }
+
+        return null;
+    }
+
+    public async Task<QrFileSaveResult> SaveToDownloadsAsync(
+        int corobId,
+        string corobName,
+        CancellationToken cancellationToken = default)
+    {
+        var cachePath = await GenerateAsync(corobId, corobName);
+        var fileName = $"{SanitizeFileName(corobName)}.png";
+
+        if (OperatingSystem.IsAndroidVersionAtLeast(29))
+        {
+            try
+            {
+                return await SaveToDownloadsCoreAsync(
+                    cachePath,
+                    fileName,
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"Не удалось сохранить QR в Downloads: {ex}");
+            }
+        }
+
+        var directory = Path.Combine(
+            FileSystem.AppDataDirectory,
+            "Otiko",
+            "QR-коды");
+        Directory.CreateDirectory(directory);
+
+        var path = Path.Combine(directory, fileName);
+        File.Copy(cachePath, path, overwrite: true);
+
+        return new QrFileSaveResult(
+            fileName,
+            path,
+            path,
+            IsPublic: false);
+    }
+
+    [SupportedOSPlatform("android29.0")]
+    private static async Task<QrFileSaveResult> SaveToDownloadsCoreAsync(
+        string cachePath,
+        string fileName,
+        CancellationToken cancellationToken)
+    {
+        var context = Android.App.Application.Context;
+        var resolver = context.ContentResolver
+            ?? throw new InvalidOperationException("ContentResolver недоступен.");
+
+        var values = new ContentValues();
+        values.Put(MediaStore.IMediaColumns.DisplayName, fileName);
+        values.Put(MediaStore.IMediaColumns.MimeType, "image/png");
+        values.Put(
+            MediaStore.IMediaColumns.RelativePath,
+            $"{Android.OS.Environment.DirectoryDownloads}/Otiko/QR-коды");
+
+        var uri = resolver.Insert(MediaStore.Downloads.ExternalContentUri, values)
+            ?? throw new InvalidOperationException(
+                "Не удалось создать PNG в Download/Otiko/QR-коды.");
+
+        await using (var output = resolver.OpenOutputStream(uri)
+            ?? throw new InvalidOperationException(
+                "Не удалось открыть PNG в Download/Otiko/QR-коды."))
+        {
+            await using var input = File.OpenRead(cachePath);
+            await input.CopyToAsync(output, cancellationToken);
+        }
+
+        return new QrFileSaveResult(
+            fileName,
+            $"Download/Otiko/QR-коды/{fileName}",
+            uri.ToString() ?? string.Empty,
+            IsPublic: true);
     }
 
     private static byte[] AddText(byte[] qrBytes, string text)

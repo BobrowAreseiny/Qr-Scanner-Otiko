@@ -88,22 +88,22 @@
                             Padding="14"
                             Margin="0"
                             MinimumHeightRequest="150"
-                            SemanticProperties.Description="История заказов">
+                            SemanticProperties.Description="Отправить файлы на компьютер">
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding OpenHistoryCommand}" />
+                            <TapGestureRecognizer Command="{Binding SendToComputerCommand}" />
                         </Border.GestureRecognizers>
                         <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
-                            <Image Source="home_history.svg"
+                            <Image Source="home_send.svg"
                                    WidthRequest="36"
                                    HeightRequest="36"
                                    HorizontalOptions="Start"
                                    Aspect="AspectFit" />
                             <Label Grid.Row="1"
-                                   Text="История"
+                                   Text="Отправка"
                                    FontSize="20"
                                    FontAttributes="Bold" />
                             <Label Grid.Row="2"
-                                   Text="Прошлые заказы"
+                                   Text="{Binding SendTileText}"
                                    FontSize="14"
                                    TextColor="{StaticResource TextSecondary}"
                                    LineBreakMode="WordWrap" />

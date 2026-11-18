@@ -15,12 +15,11 @@ public partial class ShipmentPage : ContentPage
         _keyboard = keyboard;
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
         _keyboard.ShortcutPressed -= OnShortcut;
         _keyboard.ShortcutPressed += OnShortcut;
-        await _viewModel.LoadAsync();
     }
 
     protected override void OnDisappearing()

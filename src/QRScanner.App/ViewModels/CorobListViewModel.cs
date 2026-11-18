@@ -24,7 +24,7 @@ public sealed class CorobListItem
 
     public string CountText => Corob.Capacity > 0
         ? $"{BarcodeCount} / {Corob.Capacity}"
-        : $"{BarcodeCount} марок";
+        : RussianPlural.Marks(BarcodeCount);
 
     public string StatusText => Corob.IsShipped ? "Отгружен" : "Активен";
 }

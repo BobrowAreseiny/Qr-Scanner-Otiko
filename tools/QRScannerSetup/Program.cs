@@ -16,6 +16,7 @@ namespace QRScannerSetup
         private const string Root = @"C:\QRScanner";
         private const string OrdersFolder = @"C:\QRScanner\Заказы";
         private const string QrFolder = @"C:\QRScanner\QR-коды";
+        private const string UpdatesFolder = @"C:\QRScanner\Обновления";
         private const string ShareName = "QRScanner";
         private const string UserName = "qrscanner";
         private const string AccessFile = @"C:\QRScanner-access.txt";
@@ -108,6 +109,7 @@ namespace QRScannerSetup
             Directory.CreateDirectory(Root);
             Directory.CreateDirectory(OrdersFolder);
             Directory.CreateDirectory(QrFolder);
+            Directory.CreateDirectory(UpdatesFolder);
 
             string password = LoadOrCreatePassword();
             string account = Environment.MachineName + "\\" + UserName;
@@ -172,6 +174,7 @@ namespace QRScannerSetup
                 "Password=" + password,
                 "Orders=\\\\" + ip + "\\" + ShareName + "\\Заказы",
                 "QR=\\\\" + ip + "\\" + ShareName + "\\QR-коды",
+                "Updates=\\\\" + ip + "\\" + ShareName + "\\Обновления",
                 "",
                 "Enter these values in QRScanner -> Settings -> Computer (SMB)."
             };
@@ -200,6 +203,7 @@ namespace QRScannerSetup
                 Console.WriteLine("Folders:");
                 Console.WriteLine("  " + OrdersFolder);
                 Console.WriteLine("  " + QrFolder);
+                Console.WriteLine("  " + UpdatesFolder);
                 Console.WriteLine();
                 Console.WriteLine("UNC path: \\\\" + ip + "\\" + ShareName);
                 Console.WriteLine();

@@ -149,7 +149,7 @@ public sealed partial class CorobInfoViewModel : ObservableObject
             _barcode = null;
             _corob = null;
             ClearResult();
-            StatusMessage = $"Марка удалена. В коробе {corob.Name}: {FormatCount(remaining.Count)}.";
+            StatusMessage = $"Марка удалена. В коробе {corob.Name}: {RussianPlural.Marks(remaining.Count)}.";
         }
         catch (Exception ex)
         {
@@ -171,7 +171,7 @@ public sealed partial class CorobInfoViewModel : ObservableObject
     {
         var meta = corob.Capacity > 0
             ? $"{count} / {corob.Capacity}"
-            : $"{count} марок";
+            : RussianPlural.Marks(count);
         return corob.IsShipped ? $"{meta} · Отгружен" : meta;
     }
 
@@ -193,21 +193,4 @@ public sealed partial class CorobInfoViewModel : ObservableObject
         return string.IsNullOrWhiteSpace(text) ? "Информация о товаре отсутствует" : text;
     }
 
-    private static string FormatCount(int count)
-    {
-        var lastDigit = count % 10;
-        var lastTwo = count % 100;
-
-        if (lastDigit == 1 && lastTwo != 11)
-        {
-            return $"{count} марка";
-        }
-
-        if (lastDigit is >= 2 and <= 4 && (lastTwo < 12 || lastTwo > 14))
-        {
-            return $"{count} марки";
-        }
-
-        return $"{count} марок";
-    }
 }

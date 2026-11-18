@@ -16,6 +16,7 @@ public interface ITransferQueueService
         string sourceLocation,
         string fileName,
         string kind,
+        int? referenceId = null,
         CancellationToken cancellationToken = default);
 
     Task<int> CountPendingAsync();
@@ -23,28 +24,36 @@ public interface ITransferQueueService
     Task<TransferSendResult> SendPendingAsync(CancellationToken cancellationToken = default);
 }
 
-public sealed record TransferSendResult(int Sent, int Failed, string Message);
+public sealed record TransferSendResult(
+    int Sent,
+    int Failed,
+    string Message,
+    int Skipped = 0);
 
 public sealed class TransferQueueService : ITransferQueueService
 {
     private readonly IDatabaseService _database;
     private readonly ISmbSettingsService _smbSettings;
     private readonly ISmbFileTransferService _smbTransfer;
+    private readonly IQrCodeService _qrCodeService;
 
     public TransferQueueService(
         IDatabaseService database,
         ISmbSettingsService smbSettings,
-        ISmbFileTransferService smbTransfer)
+        ISmbFileTransferService smbTransfer,
+        IQrCodeService qrCodeService)
     {
         _database = database;
         _smbSettings = smbSettings;
         _smbTransfer = smbTransfer;
+        _qrCodeService = qrCodeService;
     }
 
     public async Task EnqueueAsync(
         string sourceLocation,
         string fileName,
         string kind,
+        int? referenceId = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(sourceLocation))
@@ -91,6 +100,7 @@ public sealed class TransferQueueService : ITransferQueueService
             FileName = safeName,
             LocalPath = localPath,
             Kind = kind,
+            ReferenceId = referenceId,
             Status = "pending",
             CreatedAtUtc = DateTime.UtcNow
         });
@@ -99,6 +109,47 @@ public sealed class TransferQueueService : ITransferQueueService
     public Task<int> CountPendingAsync()
     {
         return _database.CountPendingTransfersAsync();
+    }
+
+    private async Task<int> EnsureQrCodesAsync(CancellationToken cancellationToken)
+    {
+        var corobs = await _database.GetCorobsAsync();
+        var created = 0;
+
+        foreach (var corob in corobs)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                var qr = await _qrCodeService.GetOrCreateAsync(
+                    corob.Id,
+                    corob.Name,
+                    cancellationToken);
+
+                if (qr.Created)
+                {
+                    created++;
+                }
+
+                await EnqueueAsync(
+                    qr.Location,
+                    qr.FileName,
+                    TransferKinds.Qr,
+                    referenceId: null,
+                    cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                // Пропускаем QR одного короба, остальные отправятся.
+            }
+        }
+
+        return created;
     }
 
     public async Task<TransferSendResult> SendPendingAsync(
@@ -113,13 +164,20 @@ public sealed class TransferQueueService : ITransferQueueService
                 "Общая папка не настроена. Откройте Настройки → Компьютер (SMB).");
         }
 
+        var qrCreated = await EnsureQrCodesAsync(cancellationToken);
         var pending = await _database.GetPendingTransfersAsync();
         if (pending.Count == 0)
         {
-            return new TransferSendResult(0, 0, "Нет файлов для отправки.");
+            return new TransferSendResult(
+                0,
+                0,
+                qrCreated > 0
+                    ? $"QR создано: {qrCreated}, но файлов для отправки нет."
+                    : "Нет файлов для отправки.");
         }
 
         var sent = 0;
+        var skipped = 0;
         var failed = 0;
         string? firstError = null;
 
@@ -142,11 +200,27 @@ public sealed class TransferQueueService : ITransferQueueService
                     settings,
                     item.FileName,
                     stream,
-                    cancellationToken);
+                    cancellationToken,
+                    skipIfExists: true);
 
                 if (result.Success)
                 {
-                    sent++;
+                    if (result.Skipped)
+                    {
+                        skipped++;
+                    }
+                    else
+                    {
+                        sent++;
+                    }
+
+                    if (item.Kind == TransferKinds.Order &&
+                        item.ReferenceId.HasValue)
+                    {
+                        await _database.MarkOrderSentToComputerAsync(
+                            item.ReferenceId.Value);
+                    }
+
                     try
                     {
                         File.Delete(item.LocalPath);
@@ -185,7 +259,17 @@ public sealed class TransferQueueService : ITransferQueueService
             ? $"Отправлено файлов: {sent}."
             : $"Отправлено: {sent}. Ошибок: {failed}. {firstError}";
 
-        return new TransferSendResult(sent, failed, message);
+        if (skipped > 0)
+        {
+            message += $" Пропущено (уже есть на компьютере): {skipped}.";
+        }
+
+        if (qrCreated > 0)
+        {
+            message += $" QR создано: {qrCreated}.";
+        }
+
+        return new TransferSendResult(sent, failed, message, skipped);
     }
 
     private static string SanitizeFileName(string fileName)

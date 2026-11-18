@@ -1,6 +1,8 @@
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
+using Microsoft.Maui.Storage;
 using CommunityToolkit.Mvvm.Input;
 using QRScanner.App.Data;
 using QRScanner.App.Services;
@@ -22,6 +24,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IOrderFileExporter _orderFileExporter;
     private readonly ISmbSettingsService _smbSettings;
     private readonly ISmbFileTransferService _smbTransfer;
+    private readonly IAppUpdateService _appUpdate;
 
     public SettingsViewModel(
         INavigationService navigation,
@@ -34,7 +37,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         IDatabaseService database,
         IOrderFileExporter orderFileExporter,
         ISmbSettingsService smbSettings,
-        ISmbFileTransferService smbTransfer)
+        ISmbFileTransferService smbTransfer,
+        IAppUpdateService appUpdate)
     {
         _navigation = navigation;
         _dialogs = dialogs;
@@ -47,8 +51,10 @@ public sealed partial class SettingsViewModel : ObservableObject
         _orderFileExporter = orderFileExporter;
         _smbSettings = smbSettings;
         _smbTransfer = smbTransfer;
+        _appUpdate = appUpdate;
 
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
+        OpenSectionCommand = new AsyncRelayCommand<string>(OpenSectionAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         TestCommand = new AsyncRelayCommand(TestAsync);
         ShowAboutCommand = new AsyncRelayCommand(ShowAboutAsync);
@@ -65,6 +71,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         SaveSmbCommand = new AsyncRelayCommand(SaveSmbAsync);
         TestSmbCommand = new AsyncRelayCommand(TestSmbAsync);
         ImportSmbCommand = new AsyncRelayCommand(ImportSmbAsync);
+        CheckUpdateCommand = new AsyncRelayCommand(CheckUpdateAsync);
     }
 
     [ObservableProperty]
@@ -131,6 +138,51 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string smbStatusMessage = "Укажите общую папку на компьютере.";
 
+    [ObservableProperty]
+    private string currentVersionText = string.Empty;
+
+    [ObservableProperty]
+    private string updateStatusMessage = "Обновление проверяется по общей папке компьютера.";
+
+    [ObservableProperty]
+    private bool isUpdateBusy;
+
+    [ObservableProperty]
+    private string sectionTitle = "Настройки";
+
+    [ObservableProperty]
+    private bool showDatamark;
+
+    [ObservableProperty]
+    private bool showSmb;
+
+    [ObservableProperty]
+    private bool showUpdate;
+
+    [ObservableProperty]
+    private bool showSecurity;
+
+    [ObservableProperty]
+    private bool showBackups;
+
+    [ObservableProperty]
+    private bool showFiles;
+
+    [ObservableProperty]
+    private bool showLegacy;
+
+    [ObservableProperty]
+    private bool showAbout;
+
+    [ObservableProperty]
+    private string datamarkSummaryText = "Не настроен";
+
+    [ObservableProperty]
+    private string smbSummaryText = "Не настроен";
+
+    [ObservableProperty]
+    private string backupSummaryText = "Копий нет";
+
     public bool IsSmbPasswordHidden => !IsSmbPasswordVisible;
 
     partial void OnIsSmbPasswordVisibleChanged(bool value)
@@ -139,6 +191,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     public IAsyncRelayCommand BackCommand { get; }
+
+    public IAsyncRelayCommand<string> OpenSectionCommand { get; }
 
     public IAsyncRelayCommand SaveCommand { get; }
 
@@ -170,6 +224,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public IAsyncRelayCommand ImportSmbCommand { get; }
 
+    public IAsyncRelayCommand CheckUpdateCommand { get; }
+
     public async Task LoadAsync()
     {
         var settings = await _apiSettings.LoadAsync();
@@ -180,6 +236,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         StatusMessage = settings.HasCredentials
             ? "Данные Электронного знака (Datamark) загружены."
             : "Укажите логин и пароль Электронного знака.";
+        DatamarkSummaryText = settings.HasCredentials
+            ? "Логин сохранён"
+            : "Не настроен";
 
         var smb = await _smbSettings.LoadAsync();
         SmbServer = smb.Server;
@@ -192,8 +251,57 @@ public sealed partial class SettingsViewModel : ObservableObject
         SmbStatusMessage = smb.IsConfigured
             ? "Настройки общей папки загружены."
             : "Укажите общую папку на компьютере.";
+        SmbSummaryText = smb.IsConfigured
+            ? $"{smb.Server} · {smb.Share}"
+            : "Не настроен";
+
+        var build = AppInfo.Current.BuildString;
+        CurrentVersionText = string.IsNullOrWhiteSpace(build)
+            ? AppInfo.Current.VersionString
+            : $"{AppInfo.Current.VersionString} ({build})";
 
         await RefreshBackupsAsync();
+    }
+
+    public void ApplySection(string? section)
+    {
+        var key = string.IsNullOrWhiteSpace(section)
+            ? "datamark"
+            : section.Trim().ToLowerInvariant();
+
+        if (key is not ("datamark" or "smb" or "update" or "security" or
+            "backups" or "files" or "legacy" or "about"))
+        {
+            key = "datamark";
+        }
+
+        ShowDatamark = key == "datamark";
+        ShowSmb = key == "smb";
+        ShowUpdate = key == "update";
+        ShowSecurity = key == "security";
+        ShowBackups = key == "backups";
+        ShowFiles = key == "files";
+        ShowLegacy = key == "legacy";
+        ShowAbout = key == "about";
+
+        SectionTitle = key switch
+        {
+            "smb" => "Компьютер",
+            "update" => "Обновление",
+            "security" => "Безопасность",
+            "backups" => "Копии",
+            "files" => "Файлы",
+            "legacy" => "Перенос базы",
+            "about" => "О программе",
+            _ => "Datamark"
+        };
+    }
+
+    private async Task OpenSectionAsync(string? section)
+    {
+        var key = string.IsNullOrWhiteSpace(section) ? "datamark" : section;
+        await _navigation.GoToAsync(
+            $"{nameof(SettingsSectionPage)}?section={Uri.EscapeDataString(key)}");
     }
 
     private async Task SaveAsync()
@@ -673,6 +781,66 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
     }
 
+    private async Task CheckUpdateAsync()
+    {
+        if (IsUpdateBusy)
+        {
+            return;
+        }
+
+        IsUpdateBusy = true;
+        UpdateStatusMessage = "Проверка обновления...";
+
+        try
+        {
+            var result = await _appUpdate.CheckAsync();
+            UpdateStatusMessage = result.Message;
+
+            if (!result.Success)
+            {
+                await _dialogs.ShowAlertAsync("Обновление", result.Message, "OK");
+                return;
+            }
+
+            if (!result.UpdateAvailable || result.Update is null)
+            {
+                await _dialogs.ShowAlertAsync("Обновление", result.Message, "OK");
+                return;
+            }
+
+            var confirmed = await _dialogs.ShowConfirmationAsync(
+                "Обновление",
+                $"{result.Message}\n\nУстановить сейчас? База, короба и настройки сохранятся.\n\n" +
+                "Если Play Protect предложит проверку, нажмите «Проверить», затем «Установить».",
+                "Установить",
+                "Позже");
+
+            if (!confirmed)
+            {
+                UpdateStatusMessage = "Обновление отложено.";
+                return;
+            }
+
+            UpdateStatusMessage = "Скачивание обновления с компьютера...";
+            var install = await _appUpdate.DownloadAndInstallAsync(result.Update);
+            UpdateStatusMessage = install.Message;
+
+            if (!install.Success)
+            {
+                await _dialogs.ShowAlertAsync("Обновление", install.Message, "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateStatusMessage = $"Ошибка обновления: {ex.Message}";
+            await _dialogs.ShowAlertAsync("Обновление", UpdateStatusMessage, "OK");
+        }
+        finally
+        {
+            IsUpdateBusy = false;
+        }
+    }
+
     private async Task CleanupFilesAsync()
     {
         var confirmed = await _dialogs.ShowConfirmationAsync(
@@ -717,12 +885,14 @@ public sealed partial class SettingsViewModel : ObservableObject
             if (backups.Count == 0)
             {
                 LastBackupText = "Копий нет.";
+                BackupSummaryText = "Копий нет";
                 return;
             }
 
             var latest = backups[0];
             LastBackupText =
                 $"Последняя: {latest.CreatedAt:dd.MM.yyyy HH:mm} · {FormatKind(latest.Kind)} · {FormatSize(latest.SizeBytes)}";
+            BackupSummaryText = $"Последняя: {latest.CreatedAt:dd.MM.yyyy}";
         }
         catch (Exception ex)
         {
@@ -760,7 +930,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         return _dialogs.ShowAlertAsync(
             "О программе",
-            "Сканер QR\nВерсия 1.0\n.NET 10 / MAUI",
+            $"Сканер QR\nВерсия {AppInfo.Current.VersionString}\n.NET 10 / MAUI",
             "OK");
     }
 }

@@ -10,7 +10,7 @@
           BackgroundColor="{StaticResource Background}">
 
         <controls:AppToolbar Grid.Row="0"
-                             Title="Информация о коробе"
+                             Title="Поиск марки"
                              ShowBack="True"
                              BackCommand="{Binding BackCommand}" />
 
