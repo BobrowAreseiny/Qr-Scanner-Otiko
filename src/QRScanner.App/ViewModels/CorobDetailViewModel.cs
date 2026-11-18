@@ -19,6 +19,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
     private readonly IDatamarkApiClient _apiClient;
     private readonly IQrCodeService _qrCodeService;
     private readonly IFileTransferService _fileTransferService;
+    private readonly ITransferQueueService _transferQueue;
 
     public CorobDetailViewModel(
         IDatabaseService database,
@@ -27,7 +28,8 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         IApiSettingsService apiSettings,
         IDatamarkApiClient apiClient,
         IQrCodeService qrCodeService,
-        IFileTransferService fileTransferService)
+        IFileTransferService fileTransferService,
+        ITransferQueueService transferQueue)
     {
         _database = database;
         _navigation = navigation;
@@ -36,6 +38,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         _apiClient = apiClient;
         _qrCodeService = qrCodeService;
         _fileTransferService = fileTransferService;
+        _transferQueue = transferQueue;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
@@ -150,9 +153,16 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             return;
         }
 
-        if (await _database.FindBarcodeAsync(code) is not null)
+        var existing = await _database.FindBarcodeAsync(code);
+        if (existing is not null)
         {
+            var message = await BarcodeConflictInfo.BuildAsync(
+                _database,
+                _apiClient,
+                existing,
+                settings);
             StatusMessage = "Эта марка уже отсканирована в другом коробе.";
+            await _dialogs.ShowAlertAsync("Марка уже в коробе", message, "OK");
             return;
         }
 
@@ -171,6 +181,12 @@ public sealed partial class CorobDetailViewModel : ObservableObject
 
         string? vendorCode = null;
         string? size = null;
+        string? productName = null;
+        string? productGroup = null;
+        bool? isMyProduct = null;
+        bool? gtinCheck = null;
+        LabelCheckResult? label = null;
+        string? labelError = null;
 
         if (!string.IsNullOrWhiteSpace(gtin))
         {
@@ -182,6 +198,10 @@ public sealed partial class CorobDetailViewModel : ObservableObject
                 {
                     vendorCode = product.VendorCode;
                     size = product.Size;
+                    productName = product.Name;
+                    productGroup = product.Group;
+                    isMyProduct = product.IsMy;
+                    gtinCheck = product.GtinCheck;
                 }
             }
             catch (DatamarkApiException ex) when (ex.StatusCode is 401 or 403)
@@ -194,6 +214,21 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             {
                 StatusMessage = $"Электронный знак недоступен: {ex.Message}";
             }
+
+            try
+            {
+                label = await _apiClient.CheckLabelAsync(code, settings);
+            }
+            catch (Exception ex)
+            {
+                labelError = ex.Message;
+            }
+        }
+
+        if (!await DatamarkLabelStatus.ConfirmAddAsync(_dialogs, label))
+        {
+            StatusMessage = "Марка не добавлена.";
+            return;
         }
 
         Barcodes.Add(new BoxBarcodeEntity
@@ -203,13 +238,30 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             Gtin = gtin,
             VendorCode = vendorCode,
             Size = size,
+            ProductName = productName,
+            ProductGroup = productGroup,
+            IsMyProduct = isMyProduct,
+            GtinCheck = gtinCheck,
             ScannedAtUtc = DateTime.UtcNow
         });
 
         UpdateCount();
-        StatusMessage = vendorCode is null && size is null
-            ? "Марка добавлена. Информация о товаре не получена."
-            : $"Товар: {vendorCode} {size}".Trim();
+        var status = productName is not null
+            ? $"Товар: {productName}"
+            : vendorCode is null && size is null
+                ? "Марка добавлена. Информация о товаре не получена."
+                : $"Товар: {vendorCode} {size}".Trim();
+
+        if (label is not null && label.Found && DatamarkLabelStatus.IsNotInStock(label.Status))
+        {
+            status += $" Электронный знак: {DatamarkLabelStatus.ShortStatus(label.Status)}.";
+        }
+        else if (!string.IsNullOrWhiteSpace(labelError))
+        {
+            status += $" Проверка Электронного знака: {labelError}";
+        }
+
+        StatusMessage = status;
     }
 
     private async Task EditNameAsync()
@@ -289,6 +341,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         {
             StatusMessage = "Генерация QR-кода...";
             var path = await _qrCodeService.GenerateAsync(Corob.Id, Corob.Name);
+            var queueNote = await TryEnqueueQrAsync(path);
 
             await Share.Default.RequestAsync(new ShareFileRequest
             {
@@ -296,7 +349,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
                 File = new ShareFile(path, "image/png")
             });
 
-            StatusMessage = "QR-код готов.";
+            StatusMessage = "QR-код готов." + queueNote;
         }
         catch (Exception ex)
         {
@@ -349,6 +402,7 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         {
             StatusMessage = "Генерация QR-кода...";
             var path = await _qrCodeService.GenerateAsync(Corob.Id, Corob.Name);
+            var queueNote = await TryEnqueueQrAsync(path);
 
             StatusMessage = "Выберите папку для сохранения...";
             var saved = await _fileTransferService.SaveAsync(
@@ -357,13 +411,27 @@ public sealed partial class CorobDetailViewModel : ObservableObject
                 "image/png");
 
             StatusMessage = saved
-                ? "Файл QR сохранён."
-                : "Сохранение отменено.";
+                ? "Файл QR сохранён." + queueNote
+                : "Сохранение отменено." + queueNote;
         }
         catch (Exception ex)
         {
             StatusMessage = $"Ошибка сохранения: {ex.Message}";
             await _dialogs.ShowAlertAsync("Сохранить в файл", StatusMessage);
+        }
+    }
+
+    private async Task<string> TryEnqueueQrAsync(string path)
+    {
+        try
+        {
+            var name = $"{SafeFileName(Corob?.Name ?? "QR")}.png";
+            await _transferQueue.EnqueueAsync(path, name, TransferKinds.Qr);
+            return " Добавлен в очередь на компьютер.";
+        }
+        catch (Exception ex)
+        {
+            return $" Не удалось добавить в очередь: {ex.Message}";
         }
     }
 

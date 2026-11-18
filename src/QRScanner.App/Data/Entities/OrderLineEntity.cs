@@ -20,6 +20,14 @@ public sealed class OrderLineEntity
 
     public string? Size { get; set; }
 
+    public string? ProductName { get; set; }
+
+    public string? ProductGroup { get; set; }
+
+    public bool? IsMyProduct { get; set; }
+
+    public bool? GtinCheck { get; set; }
+
     public int? SourceCorobId { get; set; }
 
     public DateTime AddedAtUtc { get; set; }
@@ -34,6 +42,11 @@ public sealed class OrderLineEntity
     {
         get
         {
+            if (!string.IsNullOrWhiteSpace(ProductName))
+            {
+                return ProductName;
+            }
+
             if (!string.IsNullOrWhiteSpace(Gtin))
             {
                 return $"GTIN {Gtin}";
@@ -54,7 +67,13 @@ public sealed class OrderLineEntity
     {
         get
         {
-            var parts = new List<string>(2);
+            var parts = new List<string>(5);
+            if (!string.IsNullOrWhiteSpace(ProductName) &&
+                !string.IsNullOrWhiteSpace(Gtin))
+            {
+                parts.Add($"GTIN {Gtin}");
+            }
+
             if (!string.IsNullOrWhiteSpace(VendorCode))
             {
                 parts.Add($"Артикул: {VendorCode}");
@@ -63,6 +82,16 @@ public sealed class OrderLineEntity
             if (!string.IsNullOrWhiteSpace(Size))
             {
                 parts.Add($"Размер: {Size}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(ProductGroup))
+            {
+                parts.Add($"Группа: {ProductGroup}");
+            }
+
+            if (IsMyProduct.HasValue)
+            {
+                parts.Add(IsMyProduct.Value ? "Наш товар: Да" : "Наш товар: Нет");
             }
 
             return string.Join(" · ", parts);

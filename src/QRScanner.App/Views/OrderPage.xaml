@@ -34,6 +34,10 @@
                            Placeholder="Название заказа" />
                 </Border>
 
+                <Label Text="Файл .txt сохранится в Download/Otiko."
+                       Style="{StaticResource BodyLabel}"
+                       Margin="2,-6,0,0" />
+
                 <Grid ColumnDefinitions="*,Auto">
                     <Label Text="Отсканировано"
                            Style="{StaticResource SettingLabel}" />

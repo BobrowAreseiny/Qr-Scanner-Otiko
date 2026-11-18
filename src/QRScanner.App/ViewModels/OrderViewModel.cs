@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using QRScanner.App.Data;
 using QRScanner.App.Data.Entities;
 using QRScanner.App.Services;
+using QRScanner.App.Services.Datamark;
 using QRScanner.Core.Barcodes;
 
 namespace QRScanner.App.ViewModels;
@@ -18,6 +19,7 @@ public sealed partial class OrderViewModel : ObservableObject
     private readonly IOneCSettingsService _oneCSettings;
     private readonly IOneCApiClient _oneCClient;
     private readonly IOrderFileExporter _orderFileExporter;
+    private readonly ITransferQueueService _transferQueue;
 
     public OrderViewModel(
         IDatabaseService database,
@@ -27,7 +29,8 @@ public sealed partial class OrderViewModel : ObservableObject
         IDatamarkApiClient apiClient,
         IOneCSettingsService oneCSettings,
         IOneCApiClient oneCClient,
-        IOrderFileExporter orderFileExporter)
+        IOrderFileExporter orderFileExporter,
+        ITransferQueueService transferQueue)
     {
         _database = database;
         _navigation = navigation;
@@ -37,6 +40,7 @@ public sealed partial class OrderViewModel : ObservableObject
         _oneCSettings = oneCSettings;
         _oneCClient = oneCClient;
         _orderFileExporter = orderFileExporter;
+        _transferQueue = transferQueue;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
@@ -140,7 +144,16 @@ public sealed partial class OrderViewModel : ObservableObject
 
         if (corob.IsShipped)
         {
-            StatusMessage = $"Короб №{corobId} уже отгружен.";
+            var order = await _database.GetShippedOrderForCorobAsync(corob.Id);
+            var message = $"Короб {corob.Name} уже отгружен.";
+            if (order is not null)
+            {
+                message +=
+                    $"\nЗаказ: «{order.Name}» от {order.CreatedAtUtc.ToLocalTime():dd.MM.yyyy HH:mm}.";
+            }
+
+            StatusMessage = $"Короб {corob.Name} уже отгружен.";
+            await _dialogs.ShowAlertAsync("Короб уже отгружен", message, "OK");
             return;
         }
 
@@ -171,6 +184,10 @@ public sealed partial class OrderViewModel : ObservableObject
                 Gtin = barcode.Gtin,
                 VendorCode = barcode.VendorCode,
                 Size = barcode.Size,
+                ProductName = barcode.ProductName,
+                ProductGroup = barcode.ProductGroup,
+                IsMyProduct = barcode.IsMyProduct,
+                GtinCheck = barcode.GtinCheck,
                 SourceCorobId = corob.Id,
                 AddedAtUtc = DateTime.UtcNow
             });
@@ -201,15 +218,28 @@ public sealed partial class OrderViewModel : ObservableObject
             return;
         }
 
-        if (await _database.FindBarcodeAsync(code) is not null)
+        var existing = await _database.FindBarcodeAsync(code);
+        if (existing is not null)
         {
+            var message = await BarcodeConflictInfo.BuildAsync(
+                _database,
+                _apiClient,
+                existing,
+                settings);
             StatusMessage = "Эта марка уже отсканирована ранее.";
+            await _dialogs.ShowAlertAsync("Марка уже в коробе", message, "OK");
             return;
         }
 
         var gtin = BarcodeParser.ExtractGtin(code);
         string? vendorCode = null;
         string? size = null;
+        string? productName = null;
+        string? productGroup = null;
+        bool? isMyProduct = null;
+        bool? gtinCheck = null;
+        LabelCheckResult? label = null;
+        string? labelError = null;
 
         if (!string.IsNullOrWhiteSpace(gtin))
         {
@@ -221,12 +251,31 @@ public sealed partial class OrderViewModel : ObservableObject
                 {
                     vendorCode = product.VendorCode;
                     size = product.Size;
+                    productName = product.Name;
+                    productGroup = product.Group;
+                    isMyProduct = product.IsMy;
+                    gtinCheck = product.GtinCheck;
                 }
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Электронный знак недоступен: {ex.Message}";
             }
+
+            try
+            {
+                label = await _apiClient.CheckLabelAsync(code, settings);
+            }
+            catch (Exception ex)
+            {
+                labelError = ex.Message;
+            }
+        }
+
+        if (!await DatamarkLabelStatus.ConfirmAddAsync(_dialogs, label))
+        {
+            StatusMessage = "Марка не добавлена.";
+            return;
         }
 
         Lines.Add(new OrderLineEntity
@@ -235,13 +284,30 @@ public sealed partial class OrderViewModel : ObservableObject
             Gtin = gtin,
             VendorCode = vendorCode,
             Size = size,
+            ProductName = productName,
+            ProductGroup = productGroup,
+            IsMyProduct = isMyProduct,
+            GtinCheck = gtinCheck,
             AddedAtUtc = DateTime.UtcNow
         });
 
         UpdateCount();
-        StatusMessage = vendorCode is null && size is null
-            ? "Марка добавлена. Информация о товаре не получена."
-            : $"Товар: {vendorCode} {size}".Trim();
+        var status = productName is not null
+            ? $"Товар: {productName}"
+            : vendorCode is null && size is null
+                ? "Марка добавлена. Информация о товаре не получена."
+                : $"Товар: {vendorCode} {size}".Trim();
+
+        if (label is not null && label.Found && DatamarkLabelStatus.IsNotInStock(label.Status))
+        {
+            status += $" Электронный знак: {DatamarkLabelStatus.ShortStatus(label.Status)}.";
+        }
+        else if (!string.IsNullOrWhiteSpace(labelError))
+        {
+            status += $" Проверка Электронного знака: {labelError}";
+        }
+
+        StatusMessage = status;
     }
 
     private async Task SaveAsync()
@@ -296,14 +362,28 @@ public sealed partial class OrderViewModel : ObservableObject
             var export = await ExportAsync(Name.Trim(), Lines.Select(l => l.Barcode));
             var oneCStatus = await TrySendTo1CAsync(order);
 
-            StatusMessage = $"Сохранено: {export.FileName}. {oneCStatus}";
+            var queueNote = string.Empty;
+            try
+            {
+                await _transferQueue.EnqueueAsync(
+                    export.Location,
+                    export.FileName,
+                    TransferKinds.Order);
+                queueNote = " Добавлено в очередь на компьютер.";
+            }
+            catch (Exception ex)
+            {
+                queueNote = $" Не удалось добавить в очередь: {ex.Message}";
+            }
+
+            StatusMessage = $"Сохранено: {export.FileName}. {oneCStatus}{queueNote}";
             var locationText = export.IsPublic
                 ? $"Файл сохранён:\n{export.DisplayPath}"
                 : $"Файл сохранён во внутренней папке:\n{export.DisplayPath}";
 
             await _dialogs.ShowAlertAsync(
                 "Заказ",
-                $"{locationText}\n\n{oneCStatus}",
+                $"{locationText}\n\n{oneCStatus}{queueNote}",
                 "OK");
         }
         catch (Exception ex)

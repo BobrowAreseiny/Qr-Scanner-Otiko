@@ -97,6 +97,81 @@
 
                 <Border Style="{StaticResource CardStyle}" Margin="0">
                     <VerticalStackLayout Spacing="8">
+                        <Label Text="КОМПЬЮТЕР (SMB)"
+                               Style="{StaticResource SectionHeaderLabel}"
+                               Margin="0,0,0,2" />
+
+                        <Label Text="Сервер" Style="{StaticResource SettingLabel}" />
+                        <Border BackgroundColor="{StaticResource Surface}"
+                                Stroke="{StaticResource Border}"
+                                StrokeThickness="1"
+                                StrokeShape="Rectangle"
+                                Padding="10,0">
+                            <Entry Text="{Binding SmbServer, Mode=TwoWay}"
+                                   Placeholder="192.168.0.15" />
+                        </Border>
+
+                        <Label Text="Общая папка" Style="{StaticResource SettingLabel}" />
+                        <Border BackgroundColor="{StaticResource Surface}"
+                                Stroke="{StaticResource Border}"
+                                StrokeThickness="1"
+                                StrokeShape="Rectangle"
+                                Padding="10,0">
+                            <Entry Text="{Binding SmbShare, Mode=TwoWay}"
+                                   Placeholder="QRScanner" />
+                        </Border>
+
+                        <Label Text="Пользователь" Style="{StaticResource SettingLabel}" />
+                        <Border BackgroundColor="{StaticResource Surface}"
+                                Stroke="{StaticResource Border}"
+                                StrokeThickness="1"
+                                StrokeShape="Rectangle"
+                                Padding="10,0">
+                            <Entry Text="{Binding SmbLogin, Mode=TwoWay}"
+                                   Placeholder="BEAVER-JR\qrscanner" />
+                        </Border>
+
+                        <Label Text="Пароль" Style="{StaticResource SettingLabel}" />
+                        <Border BackgroundColor="{StaticResource Surface}"
+                                Stroke="{StaticResource Border}"
+                                StrokeThickness="1"
+                                StrokeShape="Rectangle"
+                                Padding="10,0">
+                            <Entry Text="{Binding SmbPassword, Mode=TwoWay}"
+                                   IsPassword="{Binding IsSmbPasswordHidden}"
+                                   Placeholder="Пароль пользователя" />
+                        </Border>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                            <Switch IsToggled="{Binding IsSmbPasswordVisible}"
+                                    SemanticProperties.Description="Показать пароль SMB" />
+                            <Label Grid.Column="1"
+                                   Text="Показать пароль"
+                                   FontSize="16"
+                                   VerticalOptions="Center" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,*"
+                              ColumnSpacing="8"
+                              Margin="0,4,0,0">
+                            <Button Text="Проверить"
+                                    Style="{StaticResource CompactMenuButtonStyle}"
+                                    Command="{Binding TestSmbCommand}" />
+                            <Button Grid.Column="1"
+                                    Text="Сохранить"
+                                    Style="{StaticResource CompactMenuButtonStyle}"
+                                    Command="{Binding SaveSmbCommand}" />
+                        </Grid>
+
+                        <Label Text="{Binding SmbStatusMessage}"
+                               Style="{StaticResource BodyLabel}" />
+                        <Label Text="Файлы: C:\QRScanner\Заказы и C:\QRScanner\QR-коды."
+                               Style="{StaticResource BodyLabel}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}" Margin="0">
+                    <VerticalStackLayout Spacing="8">
                         <Label Text="БЕЗОПАСНОСТЬ"
                                Style="{StaticResource SectionHeaderLabel}"
                                Margin="0,0,0,2" />
@@ -169,6 +244,23 @@
                         </Grid>
 
                         <Label Text="{Binding BackupStatusMessage}"
+                               Style="{StaticResource BodyLabel}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}" Margin="0">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="ФАЙЛЫ"
+                               Style="{StaticResource SectionHeaderLabel}"
+                               Margin="0,0,0,2" />
+                        <Label Text="Заказы и QR: Download/Otiko"
+                               Style="{StaticResource SettingLabel}" />
+                        <Label Text="Очистка удаляет только .txt и .png старше 30 дней. База, короба и марки не затрагиваются."
+                               Style="{StaticResource BodyLabel}" />
+                        <Button Text="Очистить старые файлы"
+                                Style="{StaticResource CompactMenuButtonStyle}"
+                                Command="{Binding CleanupFilesCommand}" />
+                        <Label Text="{Binding FileCleanupStatusMessage}"
                                Style="{StaticResource BodyLabel}" />
                     </VerticalStackLayout>
                 </Border>

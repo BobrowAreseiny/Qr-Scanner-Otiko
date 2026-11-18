@@ -6,6 +6,10 @@ public interface IOrderFileExporter
         string orderName,
         IEnumerable<string> codes,
         CancellationToken cancellationToken = default);
+
+    Task<ExportFileCleanupResult> CleanupOldFilesAsync(
+        TimeSpan maxAge,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record OrderFileExportResult(
@@ -13,3 +17,7 @@ public sealed record OrderFileExportResult(
     string DisplayPath,
     string Location,
     bool IsPublic);
+
+public sealed record ExportFileCleanupResult(
+    int DeletedCount,
+    long FreedBytes);

@@ -14,6 +14,8 @@ public sealed partial class OrderHistoryDetailViewModel : ObservableObject
     private readonly IDialogService _dialogs;
     private readonly IOneCSettingsService _oneCSettings;
     private readonly IOneCApiClient _oneCClient;
+    private readonly IOrderFileExporter _orderFileExporter;
+    private readonly ITransferQueueService _transferQueue;
 
     private OrderEntity? _order;
 
@@ -22,17 +24,22 @@ public sealed partial class OrderHistoryDetailViewModel : ObservableObject
         INavigationService navigation,
         IDialogService dialogs,
         IOneCSettingsService oneCSettings,
-        IOneCApiClient oneCClient)
+        IOneCApiClient oneCClient,
+        IOrderFileExporter orderFileExporter,
+        ITransferQueueService transferQueue)
     {
         _database = database;
         _navigation = navigation;
         _dialogs = dialogs;
         _oneCSettings = oneCSettings;
         _oneCClient = oneCClient;
+        _orderFileExporter = orderFileExporter;
+        _transferQueue = transferQueue;
 
         ShipCommand = new AsyncRelayCommand(() => SetShippedAsync(true));
         ReturnCommand = new AsyncRelayCommand(() => SetShippedAsync(false));
         SendTo1CCommand = new AsyncRelayCommand(SendTo1CAsync);
+        ExportCommand = new AsyncRelayCommand(ExportAsync);
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
     }
 
@@ -43,6 +50,8 @@ public sealed partial class OrderHistoryDetailViewModel : ObservableObject
     public IAsyncRelayCommand ReturnCommand { get; }
 
     public IAsyncRelayCommand SendTo1CCommand { get; }
+
+    public IAsyncRelayCommand ExportCommand { get; }
 
     public IAsyncRelayCommand BackCommand { get; }
 
@@ -175,6 +184,51 @@ public sealed partial class OrderHistoryDetailViewModel : ObservableObject
         OneCStatusText = string.IsNullOrWhiteSpace(_order.OneCError)
             ? "1С: ожидает отправки"
             : $"1С: ошибка — {_order.OneCError}";
+    }
+
+    private async Task ExportAsync()
+    {
+        if (_order is null || Lines.Count == 0)
+        {
+            await _dialogs.ShowAlertAsync("Экспорт", "В заказе нет марок.");
+            return;
+        }
+
+        try
+        {
+            var export = await _orderFileExporter.ExportAsync(
+                _order.Name,
+                Lines.Select(line => line.Barcode));
+
+            var queueNote = string.Empty;
+            try
+            {
+                await _transferQueue.EnqueueAsync(
+                    export.Location,
+                    export.FileName,
+                    TransferKinds.Order);
+                queueNote = "\n\nДобавлено в очередь на компьютер.";
+            }
+            catch (Exception ex)
+            {
+                queueNote = $"\n\nНе удалось добавить в очередь: {ex.Message}";
+            }
+
+            StatusMessage = $"Файл сохранён: {export.DisplayPath}";
+            await _dialogs.ShowAlertAsync(
+                "Экспорт",
+                export.IsPublic
+                    ? $"Файл сохранён:\n{export.DisplayPath}{queueNote}"
+                    : $"Файл сохранён во внутренней папке:\n{export.DisplayPath}{queueNote}",
+                "OK");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Ошибка экспорта: {ex.Message}";
+            await _dialogs.ShowAlertAsync(
+                "Ошибка",
+                $"Не удалось сохранить файл: {ex.Message}");
+        }
     }
 
     private async Task SetShippedAsync(bool shipped)

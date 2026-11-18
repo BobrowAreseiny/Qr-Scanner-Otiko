@@ -14,4 +14,9 @@ public interface IDatamarkApiClient
         string gtin,
         ApiSettings settings,
         CancellationToken cancellationToken = default);
+
+    Task<LabelCheckResult?> CheckLabelAsync(
+        string code,
+        ApiSettings settings,
+        CancellationToken cancellationToken = default);
 }

@@ -19,6 +19,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IDatabaseBackupService _backupService;
     private readonly IFileTransferService _fileTransfer;
     private readonly IDatabaseService _database;
+    private readonly IOrderFileExporter _orderFileExporter;
+    private readonly ISmbSettingsService _smbSettings;
+    private readonly ISmbFileTransferService _smbTransfer;
 
     public SettingsViewModel(
         INavigationService navigation,
@@ -28,7 +31,10 @@ public sealed partial class SettingsViewModel : ObservableObject
         IDbKeyProvider keyProvider,
         IDatabaseBackupService backupService,
         IFileTransferService fileTransfer,
-        IDatabaseService database)
+        IDatabaseService database,
+        IOrderFileExporter orderFileExporter,
+        ISmbSettingsService smbSettings,
+        ISmbFileTransferService smbTransfer)
     {
         _navigation = navigation;
         _dialogs = dialogs;
@@ -38,6 +44,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         _backupService = backupService;
         _fileTransfer = fileTransfer;
         _database = database;
+        _orderFileExporter = orderFileExporter;
+        _smbSettings = smbSettings;
+        _smbTransfer = smbTransfer;
 
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
@@ -52,6 +61,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         SaveBackupCommand = new AsyncRelayCommand(SaveBackupAsync);
         RestoreBackupCommand = new AsyncRelayCommand(RestoreBackupAsync);
         ImportLegacyDatabaseCommand = new AsyncRelayCommand(ImportLegacyDatabaseAsync);
+        CleanupFilesCommand = new AsyncRelayCommand(CleanupFilesAsync);
+        SaveSmbCommand = new AsyncRelayCommand(SaveSmbAsync);
+        TestSmbCommand = new AsyncRelayCommand(TestSmbAsync);
     }
 
     [ObservableProperty]
@@ -97,6 +109,34 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string legacyImportStatusMessage = string.Empty;
 
+    [ObservableProperty]
+    private string fileCleanupStatusMessage = "Очистка удаляет .txt и .png старше 30 дней из Download/Otiko.";
+
+    [ObservableProperty]
+    private string smbServer = string.Empty;
+
+    [ObservableProperty]
+    private string smbShare = "QRScanner";
+
+    [ObservableProperty]
+    private string smbLogin = string.Empty;
+
+    [ObservableProperty]
+    private string smbPassword = string.Empty;
+
+    [ObservableProperty]
+    private bool isSmbPasswordVisible;
+
+    [ObservableProperty]
+    private string smbStatusMessage = "Укажите общую папку на компьютере.";
+
+    public bool IsSmbPasswordHidden => !IsSmbPasswordVisible;
+
+    partial void OnIsSmbPasswordVisibleChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsSmbPasswordHidden));
+    }
+
     public IAsyncRelayCommand BackCommand { get; }
 
     public IAsyncRelayCommand SaveCommand { get; }
@@ -121,6 +161,12 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public IAsyncRelayCommand ImportLegacyDatabaseCommand { get; }
 
+    public IAsyncRelayCommand CleanupFilesCommand { get; }
+
+    public IAsyncRelayCommand SaveSmbCommand { get; }
+
+    public IAsyncRelayCommand TestSmbCommand { get; }
+
     public async Task LoadAsync()
     {
         var settings = await _apiSettings.LoadAsync();
@@ -131,6 +177,18 @@ public sealed partial class SettingsViewModel : ObservableObject
         StatusMessage = settings.HasCredentials
             ? "Данные Электронного знака (Datamark) загружены."
             : "Укажите логин и пароль Электронного знака.";
+
+        var smb = await _smbSettings.LoadAsync();
+        SmbServer = smb.Server;
+        SmbShare = string.IsNullOrWhiteSpace(smb.Share) ? "QRScanner" : smb.Share;
+        SmbLogin = string.IsNullOrWhiteSpace(smb.Domain)
+            ? smb.Login
+            : $"{smb.Domain}\\{smb.Login}";
+        SmbPassword = smb.Password;
+        IsSmbPasswordVisible = false;
+        SmbStatusMessage = smb.IsConfigured
+            ? "Настройки общей папки загружены."
+            : "Укажите общую папку на компьютере.";
 
         await RefreshBackupsAsync();
     }
@@ -411,6 +469,89 @@ public sealed partial class SettingsViewModel : ObservableObject
             {
                 File.Delete(pickedPath);
             }
+        }
+    }
+
+    private SmbConnectionSettings BuildSmbSettings()
+    {
+        return new SmbConnectionSettings(
+            SmbServer,
+            SmbShare,
+            string.Empty,
+            SmbLogin,
+            SmbPassword).Normalize();
+    }
+
+    private async Task SaveSmbAsync()
+    {
+        IsBusy = true;
+        try
+        {
+            var settings = BuildSmbSettings();
+            await _smbSettings.SaveAsync(settings);
+            SmbStatusMessage = "Настройки общей папки сохранены.";
+        }
+        catch (Exception ex)
+        {
+            SmbStatusMessage = $"Ошибка сохранения: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task TestSmbAsync()
+    {
+        IsBusy = true;
+        SmbStatusMessage = "Проверка общей папки...";
+
+        try
+        {
+            var settings = BuildSmbSettings();
+            await _smbSettings.SaveAsync(settings);
+
+            var result = await _smbTransfer.TestConnectionAsync(settings);
+            SmbStatusMessage = result.Message;
+            await _dialogs.ShowAlertAsync("Компьютер", result.Message);
+        }
+        catch (Exception ex)
+        {
+            SmbStatusMessage = $"Ошибка проверки: {ex.Message}";
+            await _dialogs.ShowAlertAsync("Компьютер", SmbStatusMessage);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task CleanupFilesAsync()
+    {
+        var confirmed = await _dialogs.ShowConfirmationAsync(
+            "Очистка старых файлов",
+            "Удалить из Download/Otiko файлы .txt и .png старше 30 дней? База, короба и марки не затрагиваются.",
+            "Очистить",
+            "Отмена");
+
+        if (!confirmed)
+        {
+            FileCleanupStatusMessage = "Очистка отменена.";
+            return;
+        }
+
+        try
+        {
+            var result = await _orderFileExporter.CleanupOldFilesAsync(
+                TimeSpan.FromDays(30));
+
+            FileCleanupStatusMessage = result.DeletedCount == 0
+                ? "Старых файлов нет."
+                : $"Удалено файлов: {result.DeletedCount}. Освобождено: {FormatSize(result.FreedBytes)}.";
+        }
+        catch (Exception ex)
+        {
+            FileCleanupStatusMessage = $"Ошибка очистки: {ex.Message}";
         }
     }
 

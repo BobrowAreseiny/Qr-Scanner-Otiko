@@ -9,6 +9,16 @@ public sealed record ProductInfo(
     string? Group = null,
     bool IsMy = false);
 
+public sealed record LabelCheckResult(
+    string Code,
+    bool Found,
+    string? Status,
+    bool? IsMy,
+    string? Type,
+    string? ShipmentNumber = null,
+    string? ShipmentDate = null,
+    string? Recipient = null);
+
 internal sealed class AuthResponse
 {
     public string? token { get; set; }

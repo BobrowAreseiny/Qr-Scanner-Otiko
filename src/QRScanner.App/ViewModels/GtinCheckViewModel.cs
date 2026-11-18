@@ -87,6 +87,14 @@ public sealed partial class GtinCheckViewModel : ObservableObject
 
     private async Task CheckAsync()
     {
+        if (string.IsNullOrWhiteSpace(Gtin))
+        {
+            IsResultVisible = false;
+            IsAuthRequired = false;
+            StatusMessage = "Введите GTIN или отсканируйте код маркировки.";
+            return;
+        }
+
         var normalized = GtinValidator.Normalize(Gtin);
         if (normalized is null || !GtinValidator.IsValid(normalized))
         {

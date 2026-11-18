@@ -34,6 +34,16 @@ public interface IDatabaseService
 
     Task<IReadOnlyDictionary<int, int>> GetOrderLineCountsAsync();
 
+    Task<OrderEntity?> GetShippedOrderForCorobAsync(int corobId);
+
+    Task<TransferQueueEntity> SaveTransferAsync(TransferQueueEntity item);
+
+    Task<IReadOnlyList<TransferQueueEntity>> GetPendingTransfersAsync();
+
+    Task<int> CountPendingTransfersAsync();
+
+    Task DeleteTransferAsync(int id);
+
     Task<OrderEntity?> GetOrderAsync(int id);
 
     Task<IReadOnlyList<OrderLineEntity>> GetOrderLinesAsync(int orderId);
@@ -121,6 +131,7 @@ public sealed class DatabaseService : IDatabaseService
             await connection.CreateTableAsync<BoxBarcodeEntity>();
             await connection.CreateTableAsync<OrderEntity>();
             await connection.CreateTableAsync<OrderLineEntity>();
+            await connection.CreateTableAsync<TransferQueueEntity>();
 
             var cipherVersion = await connection.ExecuteScalarAsync<string>("PRAGMA cipher_version;");
             if (string.IsNullOrWhiteSpace(cipherVersion))
@@ -266,6 +277,69 @@ public sealed class DatabaseService : IDatabaseService
             "SELECT OrderId, COUNT(*) AS Count FROM OrderLine GROUP BY OrderId");
 
         return rows.ToDictionary(row => row.OrderId, row => row.Count);
+    }
+
+    public async Task<OrderEntity?> GetShippedOrderForCorobAsync(int corobId)
+    {
+        var connection = await GetConnectionAsync();
+        var lines = await connection.Table<OrderLineEntity>()
+            .Where(line => line.SourceCorobId == corobId)
+            .ToListAsync();
+
+        if (lines.Count == 0)
+        {
+            return null;
+        }
+
+        var orderIds = lines
+            .Select(line => line.OrderId)
+            .Distinct()
+            .ToHashSet();
+
+        var orders = await connection.Table<OrderEntity>()
+            .OrderByDescending(order => order.CreatedAtUtc)
+            .ToListAsync();
+
+        return orders.FirstOrDefault(order => orderIds.Contains(order.Id) && order.IsShipped)
+            ?? orders.FirstOrDefault(order => orderIds.Contains(order.Id));
+    }
+
+    public async Task<TransferQueueEntity> SaveTransferAsync(TransferQueueEntity item)
+    {
+        var connection = await GetConnectionAsync();
+        if (item.Id == 0)
+        {
+            await connection.InsertAsync(item);
+        }
+        else
+        {
+            await connection.UpdateAsync(item);
+        }
+
+        return item;
+    }
+
+    public async Task<IReadOnlyList<TransferQueueEntity>> GetPendingTransfersAsync()
+    {
+        var connection = await GetConnectionAsync();
+        return await connection.Table<TransferQueueEntity>()
+            .Where(item => item.Status == "pending")
+            .OrderBy(item => item.CreatedAtUtc)
+            .ToListAsync();
+    }
+
+    public async Task<int> CountPendingTransfersAsync()
+    {
+        var connection = await GetConnectionAsync();
+        return await connection.Table<TransferQueueEntity>()
+            .Where(item => item.Status == "pending")
+            .CountAsync();
+    }
+
+    public async Task DeleteTransferAsync(int id)
+    {
+        var connection = await GetConnectionAsync();
+        await connection.DeleteAsync<TransferQueueEntity>(id);
     }
 
     public async Task<OrderEntity?> GetOrderAsync(int id)

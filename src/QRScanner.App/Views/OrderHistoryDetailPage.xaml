@@ -11,7 +11,7 @@
           BackgroundColor="{StaticResource Background}">
 
         <controls:AppToolbar Grid.Row="0"
-                             Title="{Binding Title}"
+                             Title="Заказ"
                              ShowBack="True"
                              BackCommand="{Binding BackCommand}" />
 
@@ -21,6 +21,10 @@
         <ScrollView Grid.Row="2">
             <VerticalStackLayout Padding="16,16,16,24"
                                  Spacing="14">
+
+                <Label Text="{Binding Title}"
+                       Style="{StaticResource SectionHeaderLabel}"
+                       Margin="0,0,0,0" />
 
                 <Border Style="{StaticResource CardStyle}">
                     <VerticalStackLayout Spacing="4">
@@ -61,6 +65,13 @@
                 <Label Text="{Binding StatusMessage}"
                        Style="{StaticResource BodyLabel}" />
 
+                <Button Text="Экспорт файла"
+                        Style="{StaticResource CompactMenuButtonStyle}"
+                        Command="{Binding ExportCommand}" />
+
+                <Label Text="Файл .txt сохранится в Download/Otiko."
+                       Style="{StaticResource BodyLabel}" />
+
                 <Button Text="Отправить в 1С"
                         Style="{StaticResource MenuButtonStyle}"
                         HeightRequest="52"
@@ -97,7 +108,7 @@
               ColumnDefinitions="*,*,*"
               ColumnSpacing="8"
               BackgroundColor="{StaticResource Background}">
-            <Button Text="Отправлено"
+            <Button Text="Отгрузить"
                     Style="{StaticResource CompactMenuButtonStyle}"
                     Command="{Binding ShipCommand}" />
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.Versioning;
 using Android.Content;
 using Android.Provider;
@@ -8,6 +9,7 @@ namespace QRScanner.App.Services;
 public sealed class OrderFileExporter : IOrderFileExporter
 {
     private const string PublicSubfolder = "Otiko";
+    private const string MediaIdColumn = "_id";
 
     public async Task<OrderFileExportResult> ExportAsync(
         string orderName,
@@ -41,6 +43,89 @@ public sealed class OrderFileExporter : IOrderFileExporter
             path,
             path,
             IsPublic: false);
+    }
+
+    public Task<ExportFileCleanupResult> CleanupOldFilesAsync(
+        TimeSpan maxAge,
+        CancellationToken cancellationToken = default)
+    {
+        if (!OperatingSystem.IsAndroidVersionAtLeast(29))
+        {
+            return Task.FromResult(new ExportFileCleanupResult(0, 0));
+        }
+
+        return Task.FromResult(CleanupDownloads(maxAge, cancellationToken));
+    }
+
+    [SupportedOSPlatform("android29.0")]
+    private static ExportFileCleanupResult CleanupDownloads(
+        TimeSpan maxAge,
+        CancellationToken cancellationToken)
+    {
+        var context = Android.App.Application.Context;
+        var resolver = context.ContentResolver
+            ?? throw new InvalidOperationException("ContentResolver недоступен.");
+
+        var collection = MediaStore.Downloads.ExternalContentUri;
+        var threshold = DateTimeOffset.UtcNow
+            .Subtract(maxAge)
+            .ToUnixTimeSeconds()
+            .ToString(CultureInfo.InvariantCulture);
+
+        var projection = new[]
+        {
+            MediaIdColumn,
+            MediaStore.IMediaColumns.Size
+        };
+
+        var selection =
+            $"{MediaStore.IMediaColumns.RelativePath} LIKE ? AND " +
+            $"({MediaStore.IMediaColumns.DisplayName} LIKE ? OR " +
+            $"{MediaStore.IMediaColumns.DisplayName} LIKE ?) AND " +
+            $"{MediaStore.IMediaColumns.DateModified} < ?";
+
+        var selectionArgs = new[]
+        {
+            $"{Android.OS.Environment.DirectoryDownloads}/{PublicSubfolder}/%",
+            "%.txt",
+            "%.png",
+            threshold
+        };
+
+        var deleted = 0;
+        long freedBytes = 0;
+
+        using var cursor = resolver.Query(
+            collection,
+            projection,
+            selection,
+            selectionArgs,
+            sortOrder: null);
+
+        if (cursor is null)
+        {
+            return new ExportFileCleanupResult(0, 0);
+        }
+
+        var idColumn = cursor.GetColumnIndexOrThrow(MediaIdColumn);
+        var sizeColumn = cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.Size);
+
+        while (cursor.MoveToNext())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var id = cursor.GetLong(idColumn);
+            var size = cursor.GetLong(sizeColumn);
+            var uri = ContentUris.WithAppendedId(collection, id);
+
+            if (resolver.Delete(uri, null, null) > 0)
+            {
+                deleted++;
+                freedBytes += size;
+            }
+        }
+
+        return new ExportFileCleanupResult(deleted, freedBytes);
     }
 
     [SupportedOSPlatform("android29.0")]

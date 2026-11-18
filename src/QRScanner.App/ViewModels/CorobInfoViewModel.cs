@@ -179,9 +179,14 @@ public sealed partial class CorobInfoViewModel : ObservableObject
     {
         var parts = new[]
         {
+            string.IsNullOrWhiteSpace(barcode.ProductName) ? null : barcode.ProductName,
             string.IsNullOrWhiteSpace(barcode.VendorCode) ? null : $"Артикул: {barcode.VendorCode}",
             string.IsNullOrWhiteSpace(barcode.Size) ? null : $"Размер: {barcode.Size}",
-            string.IsNullOrWhiteSpace(barcode.Gtin) ? null : $"GTIN: {barcode.Gtin}"
+            string.IsNullOrWhiteSpace(barcode.Gtin) ? null : $"GTIN: {barcode.Gtin}",
+            string.IsNullOrWhiteSpace(barcode.ProductGroup) ? null : $"Группа: {barcode.ProductGroup}",
+            barcode.IsMyProduct.HasValue
+                ? (barcode.IsMyProduct.Value ? "Наш товар: Да" : "Наш товар: Нет")
+                : null
         };
 
         var text = string.Join(" · ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));

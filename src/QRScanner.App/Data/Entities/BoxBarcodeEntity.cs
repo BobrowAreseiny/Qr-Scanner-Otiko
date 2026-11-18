@@ -20,6 +20,14 @@ public sealed class BoxBarcodeEntity
 
     public string? Size { get; set; }
 
+    public string? ProductName { get; set; }
+
+    public string? ProductGroup { get; set; }
+
+    public bool? IsMyProduct { get; set; }
+
+    public bool? GtinCheck { get; set; }
+
     public DateTime ScannedAtUtc { get; set; }
 
     [Ignore]
@@ -27,6 +35,11 @@ public sealed class BoxBarcodeEntity
     {
         get
         {
+            if (!string.IsNullOrWhiteSpace(ProductName))
+            {
+                return ProductName;
+            }
+
             if (!string.IsNullOrWhiteSpace(Gtin))
             {
                 return $"GTIN {Gtin}";
@@ -47,7 +60,13 @@ public sealed class BoxBarcodeEntity
     {
         get
         {
-            var parts = new List<string>(2);
+            var parts = new List<string>(5);
+            if (!string.IsNullOrWhiteSpace(ProductName) &&
+                !string.IsNullOrWhiteSpace(Gtin))
+            {
+                parts.Add($"GTIN {Gtin}");
+            }
+
             if (!string.IsNullOrWhiteSpace(VendorCode))
             {
                 parts.Add($"Артикул: {VendorCode}");
@@ -56,6 +75,16 @@ public sealed class BoxBarcodeEntity
             if (!string.IsNullOrWhiteSpace(Size))
             {
                 parts.Add($"Размер: {Size}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(ProductGroup))
+            {
+                parts.Add($"Группа: {ProductGroup}");
+            }
+
+            if (IsMyProduct.HasValue)
+            {
+                parts.Add(IsMyProduct.Value ? "Наш товар: Да" : "Наш товар: Нет");
             }
 
             return string.Join(" · ", parts);

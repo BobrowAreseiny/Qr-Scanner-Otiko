@@ -76,12 +76,14 @@
                        Style="{StaticResource BodyLabel}" />
                 <Label Text="Нажмите 1, чтобы сохранить заказ. Файл .txt создаётся в папке Download/Otiko — её видно в проводнике Android и по USB. Если настроен API 1С, заказ отправляется сразу; при ошибке он остаётся в очереди."
                        Style="{StaticResource BodyLabel}" />
+                <Label Text="Повторно сохранить файл старого заказа можно в истории: откройте заказ и нажмите «Экспорт файла»."
+                       Style="{StaticResource BodyLabel}" />
 
                 <Label Text="История заказов"
                        Style="{StaticResource ListNameLabel}" />
                 <Label Text="В списке отображаются дата, количество марок, статус склада и статус 1С. В карточке заказа доступны:"
                        Style="{StaticResource BodyLabel}" />
-                <Label Text="1. Отправлено — отметить заказ отправленным."
+                <Label Text="1. Отгрузить — отметить заказ отправленным."
                        Style="{StaticResource BodyLabel}" />
                 <Label Text="2. Вернуть на склад — снять статус отправки с коробов."
                        Style="{StaticResource BodyLabel}" />
@@ -113,11 +115,18 @@
                 <Label Text="Кнопка «Проверить подключение» проверяет связь. «Отправить ожидающие заказы» повторно отправляет заказы, которые не ушли в 1С."
                        Style="{StaticResource BodyLabel}" />
 
+                <Label Text="Файлы"
+                       Style="{StaticResource ListNameLabel}" />
+                <Label Text="В настройках есть очистка старых файлов: удаляются .txt и .png старше 30 дней из Download/Otiko. Короба, марки и заказы не затрагиваются."
+                       Style="{StaticResource BodyLabel}" />
+
                 <Label Text="ФАЙЛ ОТГРУЗКИ"
                        Style="{StaticResource SectionHeaderLabel}" />
                 <Label Text="Файл .txt создаётся в папке Download/Otiko: одна полная марка на строку, UTF-8 без BOM. Папку видно в проводнике Android и по USB. Внутренние GS-разделители кода сохраняются, служебный символ «è» в начало не добавляется."
                        Style="{StaticResource BodyLabel}" />
                 <Label Text="Если настроен API 1С, заказ отправляется сразу; при ошибке он остаётся в очереди для повторной отправки."
+                       Style="{StaticResource BodyLabel}" />
+                <Label Text="Повторный экспорт доступен в истории заказа. Старые файлы можно удалить в настройках: «Очистить старые файлы»."
                        Style="{StaticResource BodyLabel}" />
 
                 <Label Text="БЕЗОПАСНОСТЬ И ДАННЫЕ"
@@ -132,7 +141,7 @@
                        Style="{StaticResource ListNameLabel}" />
                 <Label Text="Приложение создаёт зашифрованные копии: ежедневно (хранится 7), еженедельно (4), ежемесячно (3), плюс ручная копия. Копию можно сохранить в файл и восстановить с проверкой кода."
                        Style="{StaticResource BodyLabel}" />
-                <Label Text="Данные удаляются только вручную. Автоматической очистки коробов, марок и заказов нет."
+                <Label Text="Данные удаляются только вручную. Автоматической очистки коробов, марок и заказов нет; старые файлы можно удалить в настройках."
                        Style="{StaticResource BodyLabel}" />
 
                 <Label Text="ЛОГИ"
