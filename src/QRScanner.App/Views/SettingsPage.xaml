@@ -163,6 +163,12 @@
                                     Command="{Binding SaveSmbCommand}" />
                         </Grid>
 
+                        <Button Text="Импорт из файла"
+                                Style="{StaticResource CompactMenuButtonStyle}"
+                                Command="{Binding ImportSmbCommand}" />
+
+                        <Label Text="Скопируйте QRScanner-access.txt в Download или в папку приложения по USB."
+                               Style="{StaticResource BodyLabel}" />
                         <Label Text="{Binding SmbStatusMessage}"
                                Style="{StaticResource BodyLabel}" />
                         <Label Text="Файлы: C:\QRScanner\Заказы и C:\QRScanner\QR-коды."

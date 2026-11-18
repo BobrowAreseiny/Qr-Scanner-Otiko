@@ -64,6 +64,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         CleanupFilesCommand = new AsyncRelayCommand(CleanupFilesAsync);
         SaveSmbCommand = new AsyncRelayCommand(SaveSmbAsync);
         TestSmbCommand = new AsyncRelayCommand(TestSmbAsync);
+        ImportSmbCommand = new AsyncRelayCommand(ImportSmbAsync);
     }
 
     [ObservableProperty]
@@ -166,6 +167,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     public IAsyncRelayCommand SaveSmbCommand { get; }
 
     public IAsyncRelayCommand TestSmbCommand { get; }
+
+    public IAsyncRelayCommand ImportSmbCommand { get; }
 
     public async Task LoadAsync()
     {
@@ -465,6 +468,150 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             IsBusy = false;
 
+            if (pickedPath is not null && File.Exists(pickedPath))
+            {
+                File.Delete(pickedPath);
+            }
+        }
+    }
+
+    private static async Task<string?> ReadAccessFileFromExternalFilesAsync()
+    {
+        var external = Android.App.Application.Context.GetExternalFilesDir(null);
+        if (external is null)
+        {
+            return null;
+        }
+
+        var path = Path.Combine(external.AbsolutePath, "QRScanner-access.txt");
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+
+        return await File.ReadAllTextAsync(path);
+    }
+
+    private static async Task<string?> ReadAccessFileFromDownloadsAsync()
+    {
+        if (!OperatingSystem.IsAndroidVersionAtLeast(29))
+        {
+            return null;
+        }
+
+        var context = Android.App.Application.Context;
+        var resolver = context.ContentResolver;
+        if (resolver is null)
+        {
+            return null;
+        }
+
+        var collection = Android.Provider.MediaStore.Downloads.ExternalContentUri;
+        var projection = new[]
+        {
+            "_id",
+            Android.Provider.MediaStore.IMediaColumns.DisplayName
+        };
+        var selection =
+            $"{Android.Provider.MediaStore.IMediaColumns.DisplayName} = ?";
+
+        using var cursor = resolver.Query(
+            collection,
+            projection,
+            selection,
+            new[] { "QRScanner-access.txt" },
+            null);
+
+        if (cursor is null || !cursor.MoveToFirst())
+        {
+            return null;
+        }
+
+        var idColumn = cursor.GetColumnIndexOrThrow("_id");
+        var id = cursor.GetLong(idColumn);
+        var uri = Android.Content.ContentUris.WithAppendedId(collection, id);
+
+        using var stream = resolver.OpenInputStream(uri);
+        if (stream is null)
+        {
+            return null;
+        }
+
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        return await reader.ReadToEndAsync();
+    }
+
+    private async Task ImportSmbAsync()
+    {
+        string? pickedPath = null;
+
+        try
+        {
+            var accessText = await ReadAccessFileFromExternalFilesAsync();
+            if (accessText is null)
+            {
+                accessText = await ReadAccessFileFromDownloadsAsync();
+            }
+
+            if (accessText is null)
+            {
+                pickedPath = await _fileTransfer.PickAsync("*/*");
+                if (pickedPath is null)
+                {
+                    SmbStatusMessage = "Файл не выбран.";
+                    return;
+                }
+
+                accessText = await File.ReadAllTextAsync(pickedPath);
+            }
+
+            var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var line in accessText.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None))
+            {
+                var trimmed = line.Trim();
+                if (trimmed.Length == 0 ||
+                    trimmed.StartsWith("#", StringComparison.Ordinal) ||
+                    trimmed.StartsWith(";", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var separator = trimmed.IndexOf('=');
+                if (separator <= 0)
+                {
+                    continue;
+                }
+
+                var key = trimmed[..separator].Trim();
+                var value = trimmed[(separator + 1)..].Trim();
+                values[key] = value;
+            }
+
+            if (!values.TryGetValue("Server", out var server) ||
+                !values.TryGetValue("Share", out var share) ||
+                !values.TryGetValue("User", out var user) ||
+                !values.TryGetValue("Password", out var password))
+            {
+                SmbStatusMessage =
+                    "В файле нет строк Server, Share, User и Password.";
+                return;
+            }
+
+            SmbServer = server;
+            SmbShare = share;
+            SmbLogin = user;
+            SmbPassword = password;
+            IsSmbPasswordVisible = false;
+
+            await _smbSettings.SaveAsync(BuildSmbSettings());
+            SmbStatusMessage = "Настройки SMB импортированы. Нажмите «Проверить».";
+        }
+        catch (Exception ex)
+        {
+            SmbStatusMessage = $"Ошибка импорта: {ex.Message}";
+        }
+        finally
+        {
             if (pickedPath is not null && File.Exists(pickedPath))
             {
                 File.Delete(pickedPath);

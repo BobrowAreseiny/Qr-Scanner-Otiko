@@ -200,7 +200,9 @@ adb -s 001D1105979947 exec-out run-as com.companyname.qrscanner `
 - Отправка выполняется только по кнопке, когда ТСД находится в сети склада; мобильный интернет не используется.
 - `.txt` → `C:\QRScanner\Заказы`, `.png` → `C:\QRScanner\QR-коды`.
 - На Windows 7 запустить `tools\QRScannerSetup\QRScannerSetup.exe` от администратора. Он создаёт папки, пользователя `qrscanner`, общую папку `QRScanner` и правило TCP 445.
+- Программа определяет версию Windows: на Windows 7 включает SMB2 при необходимости, на Windows 8/8.1/10/11 использует штатный SMB2/3.
 - Параметры доступа записываются в `C:\QRScanner-access.txt`.
+- Импорт настроек: скопировать `QRScanner-access.txt` в `Android/data/by.otiko.qrscanner/files/` или `Download`, затем «Настройки → Компьютер (SMB) → Импорт из файла».
 - Для SMB используется SMBLibrary 1.5.8.1 (LGPL-3.0, https://github.com/TalAloni/SMBLibrary).
 
 ## CI

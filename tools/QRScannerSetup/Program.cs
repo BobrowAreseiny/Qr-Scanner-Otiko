@@ -7,6 +7,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Security.Principal;
 using System.Text;
+using Microsoft.Win32;
 
 namespace QRScannerSetup
 {
@@ -22,12 +23,19 @@ namespace QRScannerSetup
         private static bool _dryRun;
         private static bool _noPause;
         private static bool _noNotepad;
+        private static bool _simulateWin7;
+        private static string _osName = string.Empty;
+        private static Version _osVersion = new Version(0, 0);
+        private static bool _needsSmb2Registry;
+        private static bool _unsupportedOs;
+        private static bool _smb2Changed;
 
         private static int Main(string[] args)
         {
             _dryRun = HasArg(args, "dry-run");
             _noPause = HasArg(args, "no-pause");
             _noNotepad = HasArg(args, "no-notepad");
+            _simulateWin7 = HasArg(args, "simulate-win7");
 
             Console.Title = "QRScanner Setup";
             Console.WriteLine("QRScanner SMB setup");
@@ -80,6 +88,23 @@ namespace QRScannerSetup
                 Console.WriteLine();
             }
 
+            DetectOperatingSystem();
+
+            Console.WriteLine(
+                "OS: " + _osName +
+                " (" + _osVersion + "), " +
+                (Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit"));
+            Console.WriteLine(
+                "SMB2 registry step: " + (_needsSmb2Registry ? "required" : "not required"));
+            Console.WriteLine();
+
+            if (_unsupportedOs)
+            {
+                Console.WriteLine("This Windows version is not supported for SMB2.");
+                Console.WriteLine("Use Windows 7 or newer.");
+                return;
+            }
+
             Directory.CreateDirectory(Root);
             Directory.CreateDirectory(OrdersFolder);
             Directory.CreateDirectory(QrFolder);
@@ -104,6 +129,8 @@ namespace QRScannerSetup
                     "user " + UserName + " \"" + password + "\" /add /expires:never /passwordchg:no",
                     "create user");
             }
+
+            EnsureSmb2();
 
             Run("sc", "config lanmanserver start= auto", "server service");
             Run("net", "start lanmanserver", "start server", ignoreError: true);
@@ -131,10 +158,14 @@ namespace QRScannerSetup
                 "dir=in action=allow protocol=TCP localport=445 remoteip=localsubnet",
                 "firewall rule");
 
+            ReportPort445();
+
             string ip = GetPrimaryIPv4();
             string[] lines =
             {
                 "QRScanner SMB settings",
+                "OS=" + _osName + " (" + _osVersion + ")",
+                "SMB2=" + (_needsSmb2Registry ? "enabled" : "native"),
                 "Server=" + ip,
                 "Share=" + ShareName,
                 "User=" + account,
@@ -185,6 +216,121 @@ namespace QRScannerSetup
                         // Notepad is optional.
                     }
                 }
+            }
+        }
+
+        private static void DetectOperatingSystem()
+        {
+            _osVersion = Environment.OSVersion.Version;
+
+            if (_simulateWin7)
+            {
+                _osName = "Windows 7 (simulated)";
+                _osVersion = new Version(6, 1, 7601);
+                _needsSmb2Registry = true;
+                _unsupportedOs = false;
+                return;
+            }
+
+            if (_osVersion.Major == 10)
+            {
+                _osName = _osVersion.Build >= 22000 ? "Windows 11" : "Windows 10";
+                _needsSmb2Registry = false;
+            }
+            else if (_osVersion.Major == 6 && _osVersion.Minor == 3)
+            {
+                _osName = "Windows 8.1 / Server 2012 R2";
+                _needsSmb2Registry = false;
+            }
+            else if (_osVersion.Major == 6 && _osVersion.Minor == 2)
+            {
+                _osName = "Windows 8 / Server 2012";
+                _needsSmb2Registry = false;
+            }
+            else if (_osVersion.Major == 6 && _osVersion.Minor == 1)
+            {
+                _osName = "Windows 7 / Server 2008 R2";
+                _needsSmb2Registry = true;
+            }
+            else if (_osVersion.Major == 6 && _osVersion.Minor == 0)
+            {
+                _osName = "Windows Vista / Server 2008";
+                _needsSmb2Registry = true;
+            }
+            else
+            {
+                _osName = "Unsupported Windows " + _osVersion;
+                _unsupportedOs = true;
+                _needsSmb2Registry = false;
+            }
+        }
+
+        private static void EnsureSmb2()
+        {
+            if (!_needsSmb2Registry)
+            {
+                Console.WriteLine("[SMB2] not required on this Windows version");
+                return;
+            }
+
+            const string path = @"SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters";
+
+            try
+            {
+                RegistryKey baseKey = Environment.Is64BitOperatingSystem
+                    ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64)
+                    : Registry.LocalMachine;
+
+                using (RegistryKey key = baseKey.OpenSubKey(path, writable: !_dryRun))
+                {
+                    if (key == null)
+                    {
+                        Console.WriteLine("[SMB2] registry key not found; skipping");
+                        return;
+                    }
+
+                    object value = key.GetValue("SMB2");
+                    bool enabled = value != null && Convert.ToInt32(value) == 1;
+                    if (enabled)
+                    {
+                        Console.WriteLine("[SMB2] already enabled");
+                        return;
+                    }
+
+                    if (_dryRun)
+                    {
+                        Console.WriteLine("[SMB2] would set registry value SMB2=1");
+                        return;
+                    }
+
+                    key.SetValue("SMB2", 1, RegistryValueKind.DWord);
+                    _smb2Changed = true;
+                    Console.WriteLine("[SMB2] enabled in registry");
+                }
+
+                if (_smb2Changed)
+                {
+                    Run("net", "stop lanmanserver /y", "stop server for SMB2", ignoreError: true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[SMB2] error: " + ex.Message);
+            }
+        }
+
+        private static void ReportPort445()
+        {
+            try
+            {
+                bool listening = IPGlobalProperties.GetIPGlobalProperties()
+                    .GetActiveTcpListeners()
+                    .Any(endpoint => endpoint.Port == 445);
+                Console.WriteLine("[TCP 445] " + (listening ? "listening" : "not listening"));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[TCP 445] check failed: " + ex.Message);
             }
         }
 
