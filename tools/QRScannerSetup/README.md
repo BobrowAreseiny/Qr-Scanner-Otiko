@@ -4,7 +4,7 @@
 
 ## Запуск
 
-1. Скопируйте `QRScannerSetup.exe` и `QRCoder.dll` в одну папку на Windows 7/11.
+1. Скопируйте `QRScannerSetup.exe` (один файл) на Windows 7/11.
 2. Запустите `QRScannerSetup.exe` от имени администратора.
 3. Подтвердите UAC.
 
@@ -153,4 +153,6 @@ SmartScreen и антивирусы могут показать «Неизвес
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-Требуется .NET Framework 4.0 (включая `System.DirectoryServices.AccountManagement`) и `QRCoder.dll` (net40) в папке сборки.
+Требуется .NET Framework 4.0 (включая `System.DirectoryServices.AccountManagement`).
+`QRCoder.dll` (net40) нужен только при сборке: он встраивается в `QRScannerSetup.exe`,
+поэтому готовому установщику отдельная DLL не нужна.

@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Security.Principal;
 using System.Text;
 using System.Windows.Forms;
@@ -48,6 +49,8 @@ namespace QRScannerSetup
         [STAThread]
         private static int Main(string[] args)
         {
+            RegisterEmbeddedAssemblies();
+
             _dryRun = HasArg(args, "dry-run");
             _noPause = HasArg(args, "no-pause");
             _noNotepad = HasArg(args, "no-notepad");
@@ -113,6 +116,50 @@ namespace QRScannerSetup
 
             Pause();
             return 0;
+        }
+
+        private static void RegisterEmbeddedAssemblies()
+        {
+            AppDomain.CurrentDomain.AssemblyResolve +=
+                delegate(object sender, ResolveEventArgs args)
+                {
+                    string name = new AssemblyName(args.Name).Name;
+                    if (!string.Equals(
+                        name,
+                        "QRCoder",
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        return null;
+                    }
+
+                    using (Stream stream =
+                        typeof(Program).Assembly.GetManifestResourceStream(
+                            "QRCoder.dll"))
+                    {
+                        if (stream == null)
+                        {
+                            return null;
+                        }
+
+                        byte[] data = new byte[stream.Length];
+                        int offset = 0;
+                        while (offset < data.Length)
+                        {
+                            int read = stream.Read(
+                                data,
+                                offset,
+                                data.Length - offset);
+                            if (read <= 0)
+                            {
+                                break;
+                            }
+
+                            offset += read;
+                        }
+
+                        return Assembly.Load(data);
+                    }
+                };
         }
 
         private static void Run()
@@ -271,17 +318,30 @@ namespace QRScannerSetup
                 Console.WriteLine("  " + QrFolder);
                 Console.WriteLine("  " + UpdatesFolder);
                 Console.WriteLine();
-                Console.WriteLine("UNC path: \\\\" + ip + "\\" + ShareName);
+                Console.WriteLine(
+                    "UNC path: \\\\" + Environment.MachineName +
+                    "\\" + ShareName);
                 Console.WriteLine();
                 Console.WriteLine("Done.");
 
                 if (!_noQr)
                 {
-                    ShowSettingsQr(
-                        Environment.MachineName,
-                        ShareName,
-                        account,
-                        password);
+                    try
+                    {
+                        ShowSettingsQr(
+                            Environment.MachineName,
+                            ShareName,
+                            account,
+                            password);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("QR: " + ex.Message);
+                        Console.WriteLine(
+                            "QR window could not be shown. " +
+                            "Use " + AccessFile +
+                            " or run QRScannerSetup.exe --qr-only.");
+                    }
                 }
 
                 if (!_noNotepad)
@@ -675,7 +735,17 @@ namespace QRScannerSetup
                 return;
             }
 
-            ShowSettingsQr(server, share, user, password);
+            try
+            {
+                ShowSettingsQr(server, share, user, password);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("QR: " + ex.Message);
+                Console.WriteLine(
+                    "QR window could not be shown. " +
+                    "Use " + AccessFile + " on the scanner.");
+            }
         }
 
         private static void ShowSettingsQr(

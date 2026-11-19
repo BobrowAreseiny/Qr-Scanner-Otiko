@@ -219,7 +219,7 @@ adb -s 001D1105979947 exec-out run-as com.companyname.qrscanner `
 - Быстрая настройка: после запуска установщик показывает QR-код; на ТСД «Настройки → Компьютер → Сканировать QR настроек». Повторно показать QR: `QRScannerSetup.exe --qr-only`.
 - Запасной вариант: скопировать `QRScanner-access.txt` в `Android/data/by.otiko.qrscanner/files/` или `Download`, затем «Настройки → Компьютер (SMB) → Импорт из файла».
 - Если имя компьютера не находится, запустить установщик заново и отсканировать новый QR. На Windows 7 после включения NetBIOS нужна перезагрузка.
-- Для сборки установщика рядом с `QRScannerSetup.exe` нужен `QRCoder.dll` (net40).
+- `QRCoder.dll` (net40) нужен только при сборке и встраивается в `QRScannerSetup.exe`; готовому установщику отдельная DLL не требуется.
 - Для SMB используется SMBLibrary 1.5.8.1 (LGPL-3.0, https://github.com/TalAloni/SMBLibrary).
 
 ## Обновление приложения
