@@ -18,17 +18,23 @@ public sealed partial class CorobCreateViewModel : ObservableObject
     private readonly IDatabaseService _database;
     private readonly INavigationService _navigation;
     private readonly IDialogService _dialogs;
+    private readonly IQrCodeService _qrCodeService;
+    private readonly ITransferQueueService _transferQueue;
 
     private bool _initialized;
 
     public CorobCreateViewModel(
         IDatabaseService database,
         INavigationService navigation,
-        IDialogService dialogs)
+        IDialogService dialogs,
+        IQrCodeService qrCodeService,
+        ITransferQueueService transferQueue)
     {
         _database = database;
         _navigation = navigation;
         _dialogs = dialogs;
+        _qrCodeService = qrCodeService;
+        _transferQueue = transferQueue;
 
         SelectCapacityCommand = new Command<string>(SelectCapacity);
         CreateCommand = new AsyncRelayCommand(CreateAsync);
@@ -115,6 +121,27 @@ public sealed partial class CorobCreateViewModel : ObservableObject
                 Capacity = Capacity,
                 CreatedAtUtc = DateTime.UtcNow
             });
+
+            try
+            {
+                var qr = await _qrCodeService.SaveToDownloadsAsync(
+                    corob.Id,
+                    corob.Name);
+
+                if (!string.IsNullOrWhiteSpace(qr.Location))
+                {
+                    await _transferQueue.EnqueueAsync(
+                        qr.Location,
+                        qr.FileName,
+                        TransferKinds.Qr,
+                        corob.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"Не удалось создать QR для короба {corob.Id}: {ex}");
+            }
 
             await _navigation.GoToAsync($"../{nameof(CorobDetailPage)}?id={corob.Id}");
         }

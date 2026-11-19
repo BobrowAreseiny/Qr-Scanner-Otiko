@@ -34,15 +34,21 @@ public sealed partial class CorobListViewModel : ObservableObject
     private readonly IDatabaseService _database;
     private readonly INavigationService _navigation;
     private readonly IDialogService _dialogs;
+    private readonly IQrCodeService _qrCodeService;
+    private readonly ITransferQueueService _transferQueue;
 
     public CorobListViewModel(
         IDatabaseService database,
         INavigationService navigation,
-        IDialogService dialogs)
+        IDialogService dialogs,
+        IQrCodeService qrCodeService,
+        ITransferQueueService transferQueue)
     {
         _database = database;
         _navigation = navigation;
         _dialogs = dialogs;
+        _qrCodeService = qrCodeService;
+        _transferQueue = transferQueue;
 
         LoadCommand = new AsyncRelayCommand(LoadAsync);
         CreateCommand = new AsyncRelayCommand(CreateAsync);
@@ -133,6 +139,18 @@ public sealed partial class CorobListViewModel : ObservableObject
         }
 
         await _database.DeleteCorobAsync(item.Corob.Id);
+
+        try
+        {
+            await _qrCodeService.DeleteAsync(item.Corob.Id, item.Name);
+            await _transferQueue.RemovePendingQrAsync(item.Corob.Id, item.Name);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Не удалось очистить QR короба {item.Corob.Id}: {ex}");
+        }
+
         Corobs.Remove(item);
         IsEmpty = Corobs.Count == 0;
     }

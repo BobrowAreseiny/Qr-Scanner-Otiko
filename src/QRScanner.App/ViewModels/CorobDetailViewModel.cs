@@ -282,14 +282,46 @@ public sealed partial class CorobDetailViewModel : ObservableObject
             return;
         }
 
+        var oldName = Corob.Name;
+
         try
         {
             var trimmed = name.Trim();
+            if (string.Equals(oldName, trimmed, StringComparison.Ordinal))
+            {
+                return;
+            }
+
             Corob.Name = trimmed;
             CorobName = trimmed;
             Title = trimmed;
             await _database.SaveCorobAsync(Corob);
-            StatusMessage = "Название сохранено.";
+
+            try
+            {
+                await _qrCodeService.DeleteAsync(Corob.Id, oldName);
+                await _transferQueue.RemovePendingQrAsync(Corob.Id, oldName);
+
+                var qr = await _qrCodeService.SaveToDownloadsAsync(
+                    Corob.Id,
+                    Corob.Name);
+
+                if (!string.IsNullOrWhiteSpace(qr.Location))
+                {
+                    await _transferQueue.EnqueueAsync(
+                        qr.Location,
+                        qr.FileName,
+                        TransferKinds.Qr,
+                        Corob.Id);
+                }
+
+                StatusMessage = "Название сохранено. QR-код обновлён.";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage =
+                    "Название сохранено, но QR не обновлён: " + ex.Message;
+            }
         }
         catch (Exception ex)
         {
@@ -352,7 +384,8 @@ public sealed partial class CorobDetailViewModel : ObservableObject
                     await _transferQueue.EnqueueAsync(
                         result.Location,
                         result.FileName,
-                        TransferKinds.Qr);
+                        TransferKinds.Qr,
+                        Corob.Id);
                     queueNote = " Добавлен в очередь на компьютер.";
                 }
                 catch (Exception ex)
@@ -474,7 +507,11 @@ public sealed partial class CorobDetailViewModel : ObservableObject
         try
         {
             var name = $"{SafeFileName(Corob?.Name ?? "QR")}.png";
-            await _transferQueue.EnqueueAsync(path, name, TransferKinds.Qr);
+            await _transferQueue.EnqueueAsync(
+                path,
+                name,
+                TransferKinds.Qr,
+                Corob?.Id);
             return " Добавлен в очередь на компьютер.";
         }
         catch (Exception ex)

@@ -13,6 +13,11 @@ public interface IQrCodeService
         int corobId,
         string corobName,
         CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(
+        int corobId,
+        string corobName,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record QrFileSaveResult(

@@ -184,6 +184,79 @@ public sealed class QrCodeService : IQrCodeService
             IsPublic: false);
     }
 
+    public Task DeleteAsync(
+        int corobId,
+        string corobName,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(corobName))
+        {
+            return Task.CompletedTask;
+        }
+
+        var fileName = $"{SanitizeFileName(corobName)}.png";
+
+        if (OperatingSystem.IsAndroidVersionAtLeast(29))
+        {
+            try
+            {
+                var existing = FindInDownloads(fileName);
+                if (existing is not null &&
+                    !string.IsNullOrWhiteSpace(existing.Location))
+                {
+                    var uri = Android.Net.Uri.Parse(existing.Location);
+                    if (uri is not null)
+                    {
+                        Android.App.Application.Context.ContentResolver?
+                            .Delete(uri, null, null);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"Не удалось удалить QR из Downloads: {ex}");
+            }
+        }
+
+        var privatePath = Path.Combine(
+            FileSystem.AppDataDirectory,
+            "Otiko",
+            "QR-коды",
+            fileName);
+        try
+        {
+            if (File.Exists(privatePath))
+            {
+                File.Delete(privatePath);
+            }
+        }
+        catch
+        {
+            // Старый файл не критичен.
+        }
+
+        var cacheDirectory = Path.Combine(FileSystem.CacheDirectory, "qr");
+        if (Directory.Exists(cacheDirectory))
+        {
+            foreach (var oldFile in Directory.EnumerateFiles(
+                cacheDirectory,
+                $"{corobId}-*.png"))
+            {
+                try
+                {
+                    File.Delete(oldFile);
+                }
+                catch
+                {
+                    // Старый файл не критичен.
+                }
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
     [SupportedOSPlatform("android29.0")]
     private static async Task<QrFileSaveResult> SaveToDownloadsCoreAsync(
         string cachePath,

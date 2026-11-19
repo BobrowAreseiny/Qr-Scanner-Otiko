@@ -15,8 +15,8 @@
 
 		<ApplicationTitle>Сканер QR</ApplicationTitle>
 		<ApplicationId>by.otiko.qrscanner</ApplicationId>
-		<ApplicationDisplayVersion>1.0.9</ApplicationDisplayVersion>
-		<ApplicationVersion>10</ApplicationVersion>
+		<ApplicationDisplayVersion>1.0.10</ApplicationDisplayVersion>
+		<ApplicationVersion>11</ApplicationVersion>
 
 		<RuntimeIdentifiers>android-arm;android-arm64;android-x64</RuntimeIdentifiers>
 

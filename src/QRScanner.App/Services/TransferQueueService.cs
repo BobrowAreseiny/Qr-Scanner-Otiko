@@ -21,6 +21,11 @@ public interface ITransferQueueService
 
     Task<int> CountPendingAsync();
 
+    Task RemovePendingQrAsync(
+        int corobId,
+        string? oldCorobName = null,
+        CancellationToken cancellationToken = default);
+
     Task<TransferSendResult> SendPendingAsync(CancellationToken cancellationToken = default);
 }
 
@@ -136,7 +141,7 @@ public sealed class TransferQueueService : ITransferQueueService
                     qr.Location,
                     qr.FileName,
                     TransferKinds.Qr,
-                    referenceId: null,
+                    referenceId: corob.Id,
                     cancellationToken);
             }
             catch (OperationCanceledException)
@@ -150,6 +155,56 @@ public sealed class TransferQueueService : ITransferQueueService
         }
 
         return created;
+    }
+
+    public async Task RemovePendingQrAsync(
+        int corobId,
+        string? oldCorobName = null,
+        CancellationToken cancellationToken = default)
+    {
+        var oldFileName = string.IsNullOrWhiteSpace(oldCorobName)
+            ? null
+            : SanitizeFileName(oldCorobName) + ".png";
+
+        var pending = await _database.GetPendingTransfersAsync();
+        foreach (var item in pending)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!string.Equals(
+                item.Kind,
+                TransferKinds.Qr,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var matches = item.ReferenceId == corobId ||
+                (oldFileName is not null &&
+                 string.Equals(
+                     item.FileName,
+                     oldFileName,
+                     StringComparison.OrdinalIgnoreCase));
+
+            if (!matches)
+            {
+                continue;
+            }
+
+            try
+            {
+                if (File.Exists(item.LocalPath))
+                {
+                    File.Delete(item.LocalPath);
+                }
+            }
+            catch
+            {
+                // Копия в очереди не критична.
+            }
+
+            await _database.DeleteTransferAsync(item.Id);
+        }
     }
 
     public async Task<TransferSendResult> SendPendingAsync(
