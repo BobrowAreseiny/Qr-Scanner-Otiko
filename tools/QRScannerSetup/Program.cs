@@ -23,7 +23,12 @@ namespace QRScannerSetup
         private const string UpdatesFolder = @"C:\QRScanner\Обновления";
         private const string ShareName = "QRScanner";
         private const string UserName = "qrscanner";
+        private const string ServiceAccountDescription = "QRScanner SMB service account";
         private const string AccessFile = @"C:\QRScanner-access.txt";
+
+        private static string _userName = UserName;
+        private static bool _userNameExplicit;
+        private static string _simulateTakenUser;
 
         private static bool _dryRun;
         private static bool _noPause;
@@ -50,6 +55,16 @@ namespace QRScannerSetup
             _qrOnly = HasArg(args, "qr-only");
             _skipUser = HasArg(args, "skip-user");
             _simulateWin7 = HasArg(args, "simulate-win7");
+
+            string requestedUser = GetArgValue(args, "user");
+            if (!string.IsNullOrWhiteSpace(requestedUser))
+            {
+                _userName = requestedUser.Trim();
+                _userNameExplicit = true;
+            }
+
+            // Test-only hook: pretend a name is used by a human account.
+            _simulateTakenUser = GetArgValue(args, "simulate-taken");
 
             Console.Title = "QRScanner Setup";
             Console.WriteLine("QRScanner SMB setup");
@@ -131,7 +146,13 @@ namespace QRScannerSetup
             Directory.CreateDirectory(UpdatesFolder);
 
             string password = LoadOrCreatePassword();
-            string account = Environment.MachineName + "\\" + UserName;
+
+            if (!_skipUser)
+            {
+                _userName = ResolveServiceUserName(_userName);
+            }
+
+            string account = Environment.MachineName + "\\" + _userName;
 
             Console.WriteLine("User:  " + account);
             Console.WriteLine("Name:  " + Environment.MachineName);
@@ -146,7 +167,7 @@ namespace QRScannerSetup
             else if (_dryRun)
             {
                 Console.WriteLine(
-                    "[user] would create or update local user " + UserName);
+                    "[user] would create or update local user " + _userName);
             }
             else
             {
@@ -163,12 +184,12 @@ namespace QRScannerSetup
             Run(
                 "net",
                 "share " + ShareName + "=" + Root +
-                " /GRANT:" + UserName + ",CHANGE /REMARK:\"QRScanner files\"",
+                " /GRANT:" + _userName + ",CHANGE /REMARK:\"QRScanner files\"",
                 "create share");
 
             Run(
                 "icacls",
-                Root + " /grant " + UserName + ":(OI)(CI)M /T /C",
+                Root + " /grant " + _userName + ":(OI)(CI)M /T /C",
                 "NTFS permissions");
 
             Run(
@@ -377,6 +398,115 @@ namespace QRScannerSetup
             }
         }
 
+        private static string ResolveServiceUserName(string requested)
+        {
+            try
+            {
+                using (PrincipalContext context =
+                    new PrincipalContext(ContextType.Machine))
+                {
+                    if (_userNameExplicit)
+                    {
+                        UserPrincipal explicitUser =
+                            UserPrincipal.FindByIdentity(context, requested);
+
+                        if (explicitUser != null)
+                        {
+                            bool ours = IsServiceAccount(explicitUser);
+                            explicitUser.Dispose();
+
+                            if (!ours)
+                            {
+                                Console.WriteLine(
+                                    "[user] warning: " + requested +
+                                    " already belongs to another account; " +
+                                    "it will be reused because --user was given");
+                            }
+                        }
+
+                        return requested;
+                    }
+
+                    string name = requested;
+                    for (int suffix = 1; suffix <= 99; suffix++)
+                    {
+                        if (suffix > 1)
+                        {
+                            name = UserName + suffix;
+                        }
+
+                        if (IsSimulatedTaken(name))
+                        {
+                            Console.WriteLine(
+                                "[user] " + name +
+                                " is used by another account, trying next name");
+                            continue;
+                        }
+
+                        UserPrincipal user =
+                            UserPrincipal.FindByIdentity(context, name);
+
+                        if (user == null)
+                        {
+                            if (suffix > 1)
+                            {
+                                Console.WriteLine(
+                                    "[user] selected free name " + name);
+                            }
+
+                            return name;
+                        }
+
+                        bool ours = IsServiceAccount(user);
+                        user.Dispose();
+
+                        if (ours)
+                        {
+                            return name;
+                        }
+
+                        Console.WriteLine(
+                            "[user] " + name +
+                            " is used by another account, trying next name");
+                    }
+
+                    throw new InvalidOperationException(
+                        "No free qrscanner account name found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[user] name check failed: " + ex.Message);
+                return requested;
+            }
+        }
+
+        private static bool IsSimulatedTaken(string name)
+        {
+            return _dryRun &&
+                !string.IsNullOrWhiteSpace(_simulateTakenUser) &&
+                string.Equals(
+                    name,
+                    _simulateTakenUser.Trim(),
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsServiceAccount(UserPrincipal user)
+        {
+            string description = user.Description ?? string.Empty;
+            if (description.IndexOf(
+                "QRScanner",
+                StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
+            string displayName = user.DisplayName ?? string.Empty;
+            return displayName.IndexOf(
+                "QRScanner",
+                StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private static void EnsureUser(string password)
         {
             using (PrincipalContext context =
@@ -384,26 +514,32 @@ namespace QRScannerSetup
             {
                 UserPrincipal user = UserPrincipal.FindByIdentity(
                     context,
-                    UserName);
+                    _userName);
 
                 if (user == null)
                 {
                     user = new UserPrincipal(context);
-                    user.Name = UserName;
+                    user.Name = _userName;
                     user.DisplayName = "QRScanner SMB";
+                    user.Description = ServiceAccountDescription;
                     user.SetPassword(password);
                     user.PasswordNeverExpires = true;
                     user.UserCannotChangePassword = true;
                     user.Save();
-                    Console.WriteLine("[user] created via local accounts API");
+                    Console.WriteLine(
+                        "[user] created " + _userName +
+                        " via local accounts API");
                 }
                 else
                 {
                     user.SetPassword(password);
                     user.PasswordNeverExpires = true;
                     user.UserCannotChangePassword = true;
+                    user.Description = ServiceAccountDescription;
                     user.Save();
-                    Console.WriteLine("[user] updated via local accounts API");
+                    Console.WriteLine(
+                        "[user] updated " + _userName +
+                        " via local accounts API");
                 }
 
                 user.Dispose();
@@ -636,17 +772,6 @@ namespace QRScannerSetup
             }
         }
 
-        private static bool UserExists()
-        {
-            CommandResult result = Run(
-                "net",
-                "user " + UserName,
-                "check user",
-                ignoreError: true,
-                capture: true);
-            return result.ExitCode == 0;
-        }
-
         private static string LoadOrCreatePassword()
         {
             if (File.Exists(AccessFile))
@@ -841,6 +966,35 @@ namespace QRScannerSetup
             return args.Any(arg =>
                 string.Equals(arg, "--" + value, StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(arg, "/" + value, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string GetArgValue(string[] args, string value)
+        {
+            string prefix = "--" + value + "=";
+            for (int index = 0; index < args.Length; index++)
+            {
+                string arg = args[index];
+                if (string.Equals(
+                    arg,
+                    "--" + value,
+                    StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(
+                        arg,
+                        "/" + value,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return index + 1 < args.Length
+                        ? args[index + 1]
+                        : null;
+                }
+
+                if (arg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return arg.Substring(prefix.Length);
+                }
+            }
+
+            return null;
         }
 
         private static string Quote(string value)
