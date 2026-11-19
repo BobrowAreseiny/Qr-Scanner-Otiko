@@ -25,6 +25,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly ISmbSettingsService _smbSettings;
     private readonly ISmbFileTransferService _smbTransfer;
     private readonly IAppUpdateService _appUpdate;
+    private readonly INetworkStatusService _network;
 
     public SettingsViewModel(
         INavigationService navigation,
@@ -38,7 +39,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         IOrderFileExporter orderFileExporter,
         ISmbSettingsService smbSettings,
         ISmbFileTransferService smbTransfer,
-        IAppUpdateService appUpdate)
+        IAppUpdateService appUpdate,
+        INetworkStatusService network)
     {
         _navigation = navigation;
         _dialogs = dialogs;
@@ -52,6 +54,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _smbSettings = smbSettings;
         _smbTransfer = smbTransfer;
         _appUpdate = appUpdate;
+        _network = network;
 
         BackCommand = new AsyncRelayCommand(_navigation.GoBackAsync);
         OpenSectionCommand = new AsyncRelayCommand<string>(OpenSectionAsync);
@@ -138,6 +141,18 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private string smbStatusMessage = "Укажите общую папку на компьютере.";
+
+    [ObservableProperty]
+    private string saveButtonText = "Сохранить";
+
+    [ObservableProperty]
+    private string testButtonText = "Проверить";
+
+    [ObservableProperty]
+    private string smbSaveButtonText = "Сохранить";
+
+    [ObservableProperty]
+    private string smbTestButtonText = "Проверить";
 
     [ObservableProperty]
     private string currentVersionText = string.Empty;
@@ -358,11 +373,14 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     private async Task SaveAsync()
     {
+        SaveButtonText = "Сохранение...";
         IsBusy = true;
         try
         {
             await _apiSettings.SaveAsync(new ApiSettings(Server, Login, Password));
             StatusMessage = "Настройки Электронного знака сохранены.";
+            SaveButtonText = "Сохранено";
+            await Task.Delay(2500);
         }
         catch (Exception ex)
         {
@@ -370,12 +388,14 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
         finally
         {
+            SaveButtonText = "Сохранить";
             IsBusy = false;
         }
     }
 
     private async Task TestAsync()
     {
+        TestButtonText = "Проверка...";
         IsBusy = true;
         StatusMessage = "Проверка подключения...";
 
@@ -396,6 +416,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
         finally
         {
+            TestButtonText = "Проверить";
             IsBusy = false;
         }
     }
@@ -790,12 +811,15 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     private async Task SaveSmbAsync()
     {
+        SmbSaveButtonText = "Сохранение...";
         IsBusy = true;
         try
         {
             var settings = BuildSmbSettings();
             await _smbSettings.SaveAsync(settings);
             SmbStatusMessage = "Настройки общей папки сохранены.";
+            SmbSaveButtonText = "Сохранено";
+            await Task.Delay(2500);
         }
         catch (Exception ex)
         {
@@ -803,12 +827,22 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
         finally
         {
+            SmbSaveButtonText = "Сохранить";
             IsBusy = false;
         }
     }
 
     private async Task TestSmbAsync()
     {
+        if (!_network.IsWifiConnected)
+        {
+            SmbStatusMessage =
+                "Нет подключения к Wi-Fi. Подключитесь к сети склада.";
+            await _dialogs.ShowAlertAsync("Компьютер", SmbStatusMessage);
+            return;
+        }
+
+        SmbTestButtonText = "Проверка...";
         IsBusy = true;
         SmbStatusMessage = "Проверка общей папки...";
 
@@ -829,6 +863,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
         finally
         {
+            SmbTestButtonText = "Проверить";
             IsBusy = false;
         }
     }

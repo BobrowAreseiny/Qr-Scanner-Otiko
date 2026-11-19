@@ -120,9 +120,9 @@ QRScannerSetup.exe --uninstall --keep-data
 
 ```json
 {
-  "version": "1.4.1",
-  "versionCode": 16,
-  "file": "QRScanner-1.4.1.apk",
+  "version": "1.4.2",
+  "versionCode": 17,
+  "file": "QRScanner-1.4.2.apk",
   "sha256": "необязательно, контрольная сумма APK",
   "notes": "Что изменилось"
 }

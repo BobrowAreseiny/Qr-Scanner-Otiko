@@ -46,6 +46,7 @@ public class MainActivity : MauiAppCompatActivity
         base.OnResume();
 
         GetScannerService()?.EnableBroadcastMode();
+        _ = GetTransferAutoSendService()?.TrySendAsync();
 
         if (!_receiverRegistered)
         {
@@ -130,6 +131,12 @@ public class MainActivity : MauiAppCompatActivity
     private static IScannerService? GetScannerService()
     {
         return IPlatformApplication.Current?.Services.GetService<IScannerService>();
+    }
+
+    private static ITransferAutoSendService? GetTransferAutoSendService()
+    {
+        return IPlatformApplication.Current?.Services
+            .GetService<ITransferAutoSendService>();
     }
 
     private static int? MapDigit(int keyCode)

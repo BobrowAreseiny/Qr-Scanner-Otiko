@@ -126,6 +126,10 @@ internal sealed class AtolScannerSettings : Java.Lang.Object, IServiceConnection
             SetBool("datamatrixEnable", true);
             SetBool("gs1datamatrixEnable", true);
 
+            SetBool("enableLeftScankey", true);
+            SetBool("enableRightScankey", true);
+            SetBool("enableFrontScankey", true);
+
             Log.Info(
                 Tag,
                 "ATOL scanner: broadcast, QR and DataMatrix enabled");

@@ -8,7 +8,7 @@
 |---|---|
 | Package id | `by.otiko.qrscanner` |
 | Название | `Сканер QR` |
-| Версия | `1.4.1` (`versionCode` 16) |
+| Версия | `1.4.2` (`versionCode` 17) |
 | minSdk | 21 (Android 5+) |
 | targetSdk | 36 |
 | ABI | `armeabi-v7a`, `arm64-v8a`, `x86_64` |

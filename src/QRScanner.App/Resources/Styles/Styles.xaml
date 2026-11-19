@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <ResourceDictionary 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:QRScanner.App.Controls">
 
     <Style TargetType="Page" ApplyToDerivedTypes="True">
         <Setter Property="Padding" Value="0" />
@@ -22,7 +23,11 @@
         <Setter Property="Margin" Value="0" />
     </Style>
 
-    <Style TargetType="Button">
+    <Style x:Key="PressableButtonBase" TargetType="Button">
+        <Setter Property="controls:ButtonPressAnimation.IsEnabled" Value="True" />
+    </Style>
+
+    <Style TargetType="Button" BasedOn="{StaticResource PressableButtonBase}">
         <Setter Property="TextColor" Value="{StaticResource PrimaryDark}" />
         <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
         <Setter Property="FontSize" Value="20" />
@@ -36,7 +41,7 @@
         <Setter Property="HorizontalOptions" Value="Fill" />
     </Style>
 
-    <Style x:Key="MenuButtonStyle" TargetType="Button">
+    <Style x:Key="MenuButtonStyle" TargetType="Button" BasedOn="{StaticResource PressableButtonBase}">
         <Setter Property="TextColor" Value="{StaticResource PrimaryDark}" />
         <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
         <Setter Property="FontSize" Value="20" />
@@ -141,7 +146,7 @@
         <Setter Property="FontSize" Value="15" />
     </Style>
 
-    <Style x:Key="SmallButtonStyle" TargetType="Button">
+    <Style x:Key="SmallButtonStyle" TargetType="Button" BasedOn="{StaticResource PressableButtonBase}">
         <Setter Property="TextColor" Value="{StaticResource PrimaryDark}" />
         <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
         <Setter Property="FontSize" Value="15" />
@@ -180,7 +185,7 @@
         <Setter Property="VerticalOptions" Value="Center" />
     </Style>
 
-    <Style x:Key="CapacityButtonStyle" TargetType="Button">
+    <Style x:Key="CapacityButtonStyle" TargetType="Button" BasedOn="{StaticResource PressableButtonBase}">
         <Setter Property="TextColor" Value="{StaticResource PrimaryDark}" />
         <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
         <Setter Property="FontSize" Value="18" />

@@ -12,6 +12,8 @@ public static class TransferKinds
 
 public interface ITransferQueueService
 {
+    event EventHandler? PendingChanged;
+
     Task EnqueueAsync(
         string sourceLocation,
         string fileName,
@@ -41,18 +43,24 @@ public sealed class TransferQueueService : ITransferQueueService
     private readonly ISmbSettingsService _smbSettings;
     private readonly ISmbFileTransferService _smbTransfer;
     private readonly IQrCodeService _qrCodeService;
+    private readonly INetworkStatusService _network;
+    private readonly SemaphoreSlim _sendGate = new(1, 1);
 
     public TransferQueueService(
         IDatabaseService database,
         ISmbSettingsService smbSettings,
         ISmbFileTransferService smbTransfer,
-        IQrCodeService qrCodeService)
+        IQrCodeService qrCodeService,
+        INetworkStatusService network)
     {
         _database = database;
         _smbSettings = smbSettings;
         _smbTransfer = smbTransfer;
         _qrCodeService = qrCodeService;
+        _network = network;
     }
+
+    public event EventHandler? PendingChanged;
 
     public async Task EnqueueAsync(
         string sourceLocation,
@@ -109,6 +117,8 @@ public sealed class TransferQueueService : ITransferQueueService
             Status = "pending",
             CreatedAtUtc = DateTime.UtcNow
         });
+
+        PendingChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public Task<int> CountPendingAsync()
@@ -166,6 +176,7 @@ public sealed class TransferQueueService : ITransferQueueService
             ? null
             : SanitizeFileName(oldCorobName) + ".png";
 
+        var removed = false;
         var pending = await _database.GetPendingTransfersAsync();
         foreach (var item in pending)
         {
@@ -204,12 +215,41 @@ public sealed class TransferQueueService : ITransferQueueService
             }
 
             await _database.DeleteTransferAsync(item.Id);
+            removed = true;
+        }
+
+        if (removed)
+        {
+            PendingChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
     public async Task<TransferSendResult> SendPendingAsync(
         CancellationToken cancellationToken = default)
     {
+        await _sendGate.WaitAsync(cancellationToken);
+        try
+        {
+            return await SendPendingCoreAsync(cancellationToken);
+        }
+        finally
+        {
+            _sendGate.Release();
+            PendingChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private async Task<TransferSendResult> SendPendingCoreAsync(
+        CancellationToken cancellationToken)
+    {
+        if (!_network.IsWifiConnected)
+        {
+            return new TransferSendResult(
+                0,
+                0,
+                "Нет подключения к Wi-Fi. Файлы останутся в очереди и отправятся автоматически при подключении.");
+        }
+
         var settings = await _smbSettings.LoadAsync();
         if (!settings.IsConfigured)
         {
@@ -239,6 +279,13 @@ public sealed class TransferQueueService : ITransferQueueService
         foreach (var item in pending)
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (!_network.IsWifiConnected)
+            {
+                firstError ??=
+                    "Wi-Fi отключился. Остальные файлы останутся в очереди.";
+                break;
+            }
 
             if (!File.Exists(item.LocalPath))
             {
@@ -317,6 +364,12 @@ public sealed class TransferQueueService : ITransferQueueService
         if (skipped > 0)
         {
             message += $" Пропущено (уже есть на компьютере): {skipped}.";
+        }
+
+        var remaining = pending.Count - sent - skipped - failed;
+        if (remaining > 0)
+        {
+            message += $" Осталось в очереди: {remaining}.";
         }
 
         if (qrCreated > 0)

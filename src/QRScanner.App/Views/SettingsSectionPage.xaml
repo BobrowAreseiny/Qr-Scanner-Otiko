@@ -71,11 +71,11 @@
                         <Grid ColumnDefinitions="*,*"
                               ColumnSpacing="8"
                               Margin="0,4,0,0">
-                            <Button Text="Проверить"
+                            <Button Text="{Binding TestButtonText}"
                                     Style="{StaticResource CompactMenuButtonStyle}"
                                     Command="{Binding TestCommand}" />
                             <Button Grid.Column="1"
-                                    Text="Сохранить"
+                                    Text="{Binding SaveButtonText}"
                                     Style="{StaticResource CompactMenuButtonStyle}"
                                     Command="{Binding SaveCommand}" />
                         </Grid>
@@ -148,11 +148,11 @@
                         <Grid ColumnDefinitions="*,*"
                               ColumnSpacing="8"
                               Margin="0,4,0,0">
-                            <Button Text="Проверить"
+                            <Button Text="{Binding SmbTestButtonText}"
                                     Style="{StaticResource CompactMenuButtonStyle}"
                                     Command="{Binding TestSmbCommand}" />
                             <Button Grid.Column="1"
-                                    Text="Сохранить"
+                                    Text="{Binding SmbSaveButtonText}"
                                     Style="{StaticResource CompactMenuButtonStyle}"
                                     Command="{Binding SaveSmbCommand}" />
                         </Grid>

@@ -53,7 +53,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ISmbSettingsService, SecureStorageSmbSettingsService>();
 		builder.Services.AddSingleton<ISmbFileTransferService, SmbFileTransferService>();
 		builder.Services.AddSingleton<IAppUpdateService, AppUpdateService>();
+		builder.Services.AddSingleton<INetworkStatusService, NetworkStatusService>();
 		builder.Services.AddSingleton<ITransferQueueService, TransferQueueService>();
+		builder.Services.AddSingleton<ITransferAutoSendService, TransferAutoSendService>();
 
 		builder.Services.AddSingleton<IDbKeyProvider, SecureStorageDbKeyProvider>();
 		builder.Services.AddSingleton<LegacyDatabaseImporter>();

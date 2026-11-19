@@ -20,6 +20,7 @@ public sealed partial class HomeViewModel : ObservableObject
         _navigation = navigation;
         _dialogs = dialogs;
         _transferQueue = transferQueue;
+        _transferQueue.PendingChanged += OnPendingChanged;
 
         OpenAggregationCommand = new AsyncRelayCommand(
             () => _navigation.GoToAsync(nameof(AggregationPage)));
@@ -84,6 +85,11 @@ public sealed partial class HomeViewModel : ObservableObject
         {
             SendStatusMessage = $"Ошибка очереди: {ex.Message}";
         }
+    }
+
+    private void OnPendingChanged(object? sender, EventArgs e)
+    {
+        MainThread.BeginInvokeOnMainThread(async () => await LoadAsync());
     }
 
     private async Task SendToComputerAsync()
