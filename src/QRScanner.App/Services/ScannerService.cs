@@ -8,6 +8,8 @@ public sealed class ScannerService : IScannerService
     private const string ControlExtra = "extra_data_event";
     private const string ControlValue = "BROADCAST_EVENT";
 
+    private AtolScannerSettings? _atolSettings;
+
     public event EventHandler<BarcodeScannedEventArgs>? BarcodeScanned;
 
     public void Publish(string? data, string? symbology)
@@ -27,5 +29,13 @@ public sealed class ScannerService : IScannerService
         var intent = new Intent(ControlAction);
         intent.PutExtra(ControlExtra, ControlValue);
         Android.App.Application.Context.SendBroadcast(intent);
+
+        if (_atolSettings == null)
+        {
+            _atolSettings = new AtolScannerSettings(
+                Android.App.Application.Context);
+        }
+
+        _atolSettings.Bind();
     }
 }

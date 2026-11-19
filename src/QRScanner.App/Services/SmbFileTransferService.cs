@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using Android.Net.Wifi;
 using SMBLibrary;
 using SMBLibrary.Client;
 
@@ -641,16 +642,65 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
             // Fall through to NetBIOS and LLMNR.
         }
 
-        foreach (var suffix in new byte[] { 0x20, 0x00 })
+        WifiManager.MulticastLock? multicast = AcquireMulticastLock();
+        try
         {
-            var address = QueryNetBios(value, suffix);
-            if (address is not null)
+            foreach (var suffix in new byte[] { 0x20, 0x00 })
             {
-                return address;
+                var address = QueryNetBios(value, suffix);
+                if (address is not null)
+                {
+                    Android.Util.Log.Info(
+                        "QRScanner",
+                        "resolved " + value + " via NetBIOS");
+                    return address;
+                }
+            }
+
+            var llmnr = QueryLlmnr(value);
+            if (llmnr is not null)
+            {
+                Android.Util.Log.Info(
+                    "QRScanner",
+                    "resolved " + value + " via LLMNR");
+            }
+
+            return llmnr;
+        }
+        finally
+        {
+            try
+            {
+                multicast?.Release();
+            }
+            catch
+            {
+                // The multicast lock is optional.
             }
         }
+    }
 
-        return QueryLlmnr(value);
+    private static WifiManager.MulticastLock? AcquireMulticastLock()
+    {
+        try
+        {
+            var context = Android.App.Application.Context;
+            var wifi = (WifiManager?)context.GetSystemService(
+                Android.Content.Context.WifiService);
+            var multicast = wifi?.CreateMulticastLock("QRScanner");
+            if (multicast is null)
+            {
+                return null;
+            }
+
+            multicast.SetReferenceCounted(false);
+            multicast.Acquire();
+            return multicast;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static IPAddress? QueryNetBios(string name, byte suffix)

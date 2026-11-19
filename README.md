@@ -66,7 +66,12 @@ adb install -r <путь-к-apk>
 
 1. `Scan Setting` → `Data Receive Method` → `Broadcast_Event`.
 2. Включить `Left ScanKey`, `Right ScanKey`, `Front ScanKey`.
-3. `Module Setting` → включить нужные типы ШК, в том числе **Data Matrix**.
+   Если все три выключены, сканер не срабатывает и может писать «сканирование запрещено».
+3. `Module Setting` → включить нужные типы ШК, в том числе **QR Code** и **Data Matrix**.
+
+На ATOL Smart.Lite приложение дополнительно пытается включить broadcast, QR и Data Matrix
+через сервис `ru.atol.barcodeservice`. На старом Android 7 для поиска компьютера по имени
+используется Wi-Fi multicast lock (LLMNR/NetBIOS).
 
 Для `Barcode Service` проверить:
 
