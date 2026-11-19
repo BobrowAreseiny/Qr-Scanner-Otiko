@@ -637,12 +637,21 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
                 return ipv4;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Fall through to NetBIOS and LLMNR.
+            Android.Util.Log.Warn(
+                "QRScanner",
+                "DNS resolve failed for " + value + ": " + ex.Message);
         }
 
         WifiManager.MulticastLock? multicast = AcquireMulticastLock();
+        if (multicast is null)
+        {
+            Android.Util.Log.Warn(
+                "QRScanner",
+                "Wi-Fi multicast lock is unavailable");
+        }
+
         try
         {
             foreach (var suffix in new byte[] { 0x20, 0x00 })
@@ -663,6 +672,13 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
                 Android.Util.Log.Info(
                     "QRScanner",
                     "resolved " + value + " via LLMNR");
+            }
+            else
+            {
+                Android.Util.Log.Warn(
+                    "QRScanner",
+                    "could not resolve " + value +
+                    " via DNS, NetBIOS or LLMNR");
             }
 
             return llmnr;
@@ -697,8 +713,11 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
             multicast.Acquire();
             return multicast;
         }
-        catch
+        catch (Exception ex)
         {
+            Android.Util.Log.Warn(
+                "QRScanner",
+                "multicast lock failed: " + ex.Message);
             return null;
         }
     }
