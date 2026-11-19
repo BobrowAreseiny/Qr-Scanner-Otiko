@@ -10,14 +10,17 @@ public partial class SettingsSectionPage : ContentPage, IQueryAttributable
 {
     private readonly SettingsViewModel _viewModel;
     private readonly IKeyboardShortcutService _keyboard;
+    private readonly IScannerService _scanner;
 
     public SettingsSectionPage(
         SettingsViewModel viewModel,
-        IKeyboardShortcutService keyboard)
+        IKeyboardShortcutService keyboard,
+        IScannerService scanner)
     {
         InitializeComponent();
         BindingContext = _viewModel = viewModel;
         _keyboard = keyboard;
+        _scanner = scanner;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -33,12 +36,15 @@ public partial class SettingsSectionPage : ContentPage, IQueryAttributable
         base.OnAppearing();
         _keyboard.ShortcutPressed -= OnShortcut;
         _keyboard.ShortcutPressed += OnShortcut;
+        _scanner.BarcodeScanned -= OnBarcodeScanned;
+        _scanner.BarcodeScanned += OnBarcodeScanned;
         await _viewModel.LoadAsync();
     }
 
     protected override void OnDisappearing()
     {
         _keyboard.ShortcutPressed -= OnShortcut;
+        _scanner.BarcodeScanned -= OnBarcodeScanned;
         _viewModel.Password = string.Empty;
         _viewModel.SmbPassword = string.Empty;
         HideKeyboard();
@@ -60,6 +66,14 @@ public partial class SettingsSectionPage : ContentPage, IQueryAttributable
 
         manager?.HideSoftInputFromWindow(focus.WindowToken, 0);
         focus.ClearFocus();
+    }
+
+    private void OnBarcodeScanned(object? sender, BarcodeScannedEventArgs args)
+    {
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            await _viewModel.HandleSettingsScanAsync(args.Data);
+        });
     }
 
     private void OnShortcut(int digit)

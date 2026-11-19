@@ -102,7 +102,7 @@
                                 StrokeShape="Rectangle"
                                 Padding="10,0">
                             <Entry Text="{Binding SmbServer, Mode=TwoWay}"
-                                   Placeholder="192.168.0.15" />
+                                   Placeholder="BEAVER-JR" />
                         </Border>
 
                         <Label Text="Общая папка" Style="{StaticResource SettingLabel}" />
@@ -156,6 +156,12 @@
                                     Style="{StaticResource CompactMenuButtonStyle}"
                                     Command="{Binding SaveSmbCommand}" />
                         </Grid>
+
+                        <Button Text="Сканировать QR настроек"
+                                Style="{StaticResource CompactMenuButtonStyle}"
+                                Command="{Binding ScanSettingsQrCommand}" />
+                        <Label Text="Наведите сканер на QR-код, показанный программой настройки на компьютере."
+                               Style="{StaticResource BodyLabel}" />
 
                         <Button Text="Импорт из файла"
                                 Style="{StaticResource CompactMenuButtonStyle}"

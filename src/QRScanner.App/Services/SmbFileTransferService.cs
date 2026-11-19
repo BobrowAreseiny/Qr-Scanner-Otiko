@@ -1,5 +1,8 @@
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
+using System.Text;
 using SMBLibrary;
 using SMBLibrary.Client;
 
@@ -106,18 +109,19 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
             cancellationToken.ThrowIfCancellationRequested();
 
             client = new SMB2Client(ResponseTimeoutMilliseconds);
-            if (!IPAddress.TryParse(settings.Server, out var address))
+            var address = ResolveAddress(settings.Server);
+            if (address is null)
             {
                 return new SmbOperationResult(
                     false,
-                    "Укажите IP-адрес компьютера, например 192.168.0.15.");
+                    $"Компьютер «{settings.Server}» не найден в сети. Проверьте имя компьютера.");
             }
 
             if (!client.Connect(address, SMBTransportType.DirectTCPTransport))
             {
                 return new SmbOperationResult(
                     false,
-                    "Компьютер не отвечает по SMB. Проверьте сеть и порт 445.");
+                    "Компьютер не отвечает по SMB. " + ProbeTcp(address));
             }
 
             connected = true;
@@ -263,18 +267,19 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
             var data = memory.ToArray();
 
             client = new SMB2Client(ResponseTimeoutMilliseconds);
-            if (!IPAddress.TryParse(settings.Server, out var address))
+            var address = ResolveAddress(settings.Server);
+            if (address is null)
             {
                 return new SmbOperationResult(
                     false,
-                    "Укажите IP-адрес компьютера, например 192.168.0.15.");
+                    $"Компьютер «{settings.Server}» не найден в сети. Проверьте имя компьютера.");
             }
 
             if (!client.Connect(address, SMBTransportType.DirectTCPTransport))
             {
                 return new SmbOperationResult(
                     false,
-                    "Компьютер не отвечает по SMB. Проверьте сеть и порт 445.");
+                    "Компьютер не отвечает по SMB. " + ProbeTcp(address));
             }
 
             connected = true;
@@ -448,11 +453,12 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
             cancellationToken.ThrowIfCancellationRequested();
 
             client = new SMB2Client(ResponseTimeoutMilliseconds);
-            if (!IPAddress.TryParse(settings.Server, out var address))
+            var address = ResolveAddress(settings.Server);
+            if (address is null)
             {
                 return new SmbDownloadResult(
                     false,
-                    "Укажите IP-адрес компьютера, например 192.168.0.15.",
+                    $"Компьютер «{settings.Server}» не найден в сети. Проверьте имя компьютера.",
                     0);
             }
 
@@ -460,7 +466,7 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
             {
                 return new SmbDownloadResult(
                     false,
-                    "Компьютер не отвечает по SMB. Проверьте сеть и порт 445.",
+                    "Компьютер не отвечает по SMB. " + ProbeTcp(address),
                     0);
             }
 
@@ -607,6 +613,376 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
         }
     }
 
+    private static IPAddress? ResolveAddress(string server)
+    {
+        if (string.IsNullOrWhiteSpace(server))
+        {
+            return null;
+        }
+
+        var value = server.Trim();
+        if (IPAddress.TryParse(value, out var direct))
+        {
+            return direct;
+        }
+
+        try
+        {
+            var addresses = Dns.GetHostAddresses(value);
+            var ipv4 = addresses.FirstOrDefault(
+                address => address.AddressFamily == AddressFamily.InterNetwork);
+            if (ipv4 is not null)
+            {
+                return ipv4;
+            }
+        }
+        catch
+        {
+            // Fall through to NetBIOS and LLMNR.
+        }
+
+        foreach (var suffix in new byte[] { 0x20, 0x00 })
+        {
+            var address = QueryNetBios(value, suffix);
+            if (address is not null)
+            {
+                return address;
+            }
+        }
+
+        return QueryLlmnr(value);
+    }
+
+    private static IPAddress? QueryNetBios(string name, byte suffix)
+    {
+        try
+        {
+            var query = BuildNetBiosQuery(name, suffix);
+            using var udp = new UdpClient();
+            udp.EnableBroadcast = true;
+            udp.Client.ReceiveTimeout = 1200;
+
+            udp.Send(query, query.Length, new IPEndPoint(IPAddress.Broadcast, 137));
+            var subnet = GetSubnetBroadcast();
+            if (subnet is not null)
+            {
+                try
+                {
+                    udp.Send(
+                        query,
+                        query.Length,
+                        new IPEndPoint(subnet, 137));
+                }
+                catch
+                {
+                    // The limited broadcast is enough.
+                }
+            }
+
+            var remote = new IPEndPoint(IPAddress.Any, 0);
+            var response = udp.Receive(ref remote);
+            return ParseNetBiosResponse(response);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static byte[] BuildNetBiosQuery(string name, byte suffix)
+    {
+        var bytes = new List<byte>
+        {
+            0x12, 0x34, 0x01, 0x10, 0x00, 0x01,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        };
+
+        var padded = (name ?? string.Empty).Trim().ToUpperInvariant();
+        if (padded.Length > 15)
+        {
+            padded = padded[..15];
+        }
+
+        padded = padded.PadRight(15);
+        foreach (var character in padded)
+        {
+            bytes.Add((byte)('A' + ((character >> 4) & 0x0F)));
+            bytes.Add((byte)('A' + (character & 0x0F)));
+        }
+
+        bytes.Add((byte)('A' + ((suffix >> 4) & 0x0F)));
+        bytes.Add((byte)('A' + (suffix & 0x0F)));
+        bytes.Add(0x00);
+        bytes.Add(0x00);
+        bytes.Add(0x20);
+        bytes.Add(0x00);
+        bytes.Add(0x01);
+        return bytes.ToArray();
+    }
+
+    private static IPAddress? ParseNetBiosResponse(byte[] data)
+    {
+        if (data is null || data.Length < 12)
+        {
+            return null;
+        }
+
+        var position = 12;
+        position = SkipDnsName(data, position);
+        if (position + 4 > data.Length)
+        {
+            return null;
+        }
+
+        position += 4;
+        while (position + 10 <= data.Length)
+        {
+            position = SkipDnsName(data, position);
+            if (position + 10 > data.Length)
+            {
+                break;
+            }
+
+            var type = ReadUInt16(data, position);
+            position += 2;
+            position += 2;
+            position += 4;
+            var length = ReadUInt16(data, position);
+            position += 2;
+
+            if (position + length > data.Length)
+            {
+                break;
+            }
+
+            if (type == 0x0020 && length >= 6)
+            {
+                return new IPAddress(new[]
+                {
+                    data[position + 2],
+                    data[position + 3],
+                    data[position + 4],
+                    data[position + 5]
+                });
+            }
+
+            position += length;
+        }
+
+        return null;
+    }
+
+    private static IPAddress? QueryLlmnr(string name)
+    {
+        try
+        {
+            var query = BuildDnsQuery(name);
+            using var udp = new UdpClient();
+            udp.Client.ReceiveTimeout = 1200;
+            udp.Send(
+                query,
+                query.Length,
+                new IPEndPoint(IPAddress.Parse("224.0.0.252"), 5355));
+
+            var remote = new IPEndPoint(IPAddress.Any, 0);
+            var response = udp.Receive(ref remote);
+            return ParseDnsAResponse(response);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static byte[] BuildDnsQuery(string name)
+    {
+        var bytes = new List<byte>
+        {
+            0x12, 0x34, 0x00, 0x00, 0x00, 0x01,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        };
+
+        foreach (var label in (name ?? string.Empty).Trim().Split('.'))
+        {
+            var labelBytes = Encoding.ASCII.GetBytes(label);
+            if (labelBytes.Length == 0 || labelBytes.Length > 63)
+            {
+                continue;
+            }
+
+            bytes.Add((byte)labelBytes.Length);
+            bytes.AddRange(labelBytes);
+        }
+
+        bytes.Add(0x00);
+        bytes.AddRange(new byte[] { 0x00, 0x01, 0x00, 0x01 });
+        return bytes.ToArray();
+    }
+
+    private static IPAddress? ParseDnsAResponse(byte[] data)
+    {
+        if (data is null || data.Length < 12)
+        {
+            return null;
+        }
+
+        var position = 12;
+        position = SkipDnsName(data, position);
+        if (position + 4 > data.Length)
+        {
+            return null;
+        }
+
+        position += 4;
+        while (position + 10 <= data.Length)
+        {
+            position = SkipDnsName(data, position);
+            if (position + 10 > data.Length)
+            {
+                break;
+            }
+
+            var type = ReadUInt16(data, position);
+            position += 2;
+            var classValue = ReadUInt16(data, position);
+            position += 2;
+            position += 4;
+            var length = ReadUInt16(data, position);
+            position += 2;
+
+            if (position + length > data.Length)
+            {
+                break;
+            }
+
+            if (type == 1 && classValue == 1 && length == 4)
+            {
+                return new IPAddress(new[]
+                {
+                    data[position],
+                    data[position + 1],
+                    data[position + 2],
+                    data[position + 3]
+                });
+            }
+
+            position += length;
+        }
+
+        return null;
+    }
+
+    private static int SkipDnsName(byte[] data, int position)
+    {
+        while (position < data.Length)
+        {
+            var length = data[position];
+            if (length == 0)
+            {
+                return position + 1;
+            }
+
+            if ((length & 0xC0) == 0xC0)
+            {
+                return position + 2;
+            }
+
+            position += 1 + length;
+        }
+
+        return data.Length;
+    }
+
+    private static ushort ReadUInt16(byte[] data, int position)
+    {
+        return (ushort)((data[position] << 8) | data[position + 1]);
+    }
+
+    private static IPAddress? GetSubnetBroadcast()
+    {
+        try
+        {
+            foreach (var networkInterface in
+                NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (networkInterface.OperationalStatus != OperationalStatus.Up ||
+                    networkInterface.NetworkInterfaceType ==
+                    NetworkInterfaceType.Loopback)
+                {
+                    continue;
+                }
+
+                if (networkInterface.NetworkInterfaceType !=
+                        NetworkInterfaceType.Wireless80211 &&
+                    !networkInterface.Name.Contains(
+                        "wlan",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                foreach (var unicast in
+                    networkInterface.GetIPProperties().UnicastAddresses)
+                {
+                    if (unicast.Address.AddressFamily !=
+                        AddressFamily.InterNetwork)
+                    {
+                        continue;
+                    }
+
+                    var prefixLength = unicast.PrefixLength;
+                    if (prefixLength <= 0 || prefixLength > 30)
+                    {
+                        continue;
+                    }
+
+                    var addressBytes = unicast.Address.GetAddressBytes();
+                    var address = (uint)(
+                        (addressBytes[0] << 24) |
+                        (addressBytes[1] << 16) |
+                        (addressBytes[2] << 8) |
+                        addressBytes[3]);
+                    var mask = 0xFFFFFFFFu << (32 - prefixLength);
+                    var broadcast = address | ~mask;
+
+                    return new IPAddress(new[]
+                    {
+                        (byte)(broadcast >> 24),
+                        (byte)(broadcast >> 16),
+                        (byte)(broadcast >> 8),
+                        (byte)broadcast
+                    });
+                }
+            }
+        }
+        catch
+        {
+            // The subnet broadcast is optional.
+        }
+
+        return null;
+    }
+
+    private static string ProbeTcp(IPAddress address)
+    {
+        try
+        {
+            using var client = new System.Net.Sockets.TcpClient();
+            var task = client.ConnectAsync(address, 445);
+            if (!task.Wait(TimeSpan.FromSeconds(5)))
+            {
+                return "TCP 445: таймаут.";
+            }
+
+            return "TCP 445 доступен, но SMB-согласование не удалось.";
+        }
+        catch (Exception ex)
+        {
+            var inner = ex.InnerException ?? ex;
+            return "TCP 445: " + inner.Message;
+        }
+    }
+
     private static NTStatus Login(SMB2Client client, SmbConnectionSettings settings)
     {
         var status = client.Login(settings.Domain, settings.Login, settings.Password);
@@ -654,11 +1030,6 @@ public sealed class SmbFileTransferService : ISmbFileTransferService
         if (!settings.IsConfigured)
         {
             return "Заполните сервер, папку, пользователя и пароль.";
-        }
-
-        if (!IPAddress.TryParse(settings.Server, out _))
-        {
-            return "Укажите IP-адрес компьютера, например 192.168.0.15.";
         }
 
         return null;

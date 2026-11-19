@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Security.Principal;
 using System.Text;
+using System.Windows.Forms;
 using Microsoft.Win32;
+using QRCoder;
 
 namespace QRScannerSetup
 {
@@ -24,24 +27,36 @@ namespace QRScannerSetup
         private static bool _dryRun;
         private static bool _noPause;
         private static bool _noNotepad;
+        private static bool _noQr;
+        private static bool _qrOnly;
         private static bool _simulateWin7;
         private static string _osName = string.Empty;
         private static Version _osVersion = new Version(0, 0);
         private static bool _needsSmb2Registry;
         private static bool _unsupportedOs;
         private static bool _smb2Changed;
+        private static bool _netbiosChanged;
 
+        [STAThread]
         private static int Main(string[] args)
         {
             _dryRun = HasArg(args, "dry-run");
             _noPause = HasArg(args, "no-pause");
             _noNotepad = HasArg(args, "no-notepad");
+            _noQr = HasArg(args, "no-qr");
+            _qrOnly = HasArg(args, "qr-only");
             _simulateWin7 = HasArg(args, "simulate-win7");
 
             Console.Title = "QRScanner Setup";
             Console.WriteLine("QRScanner SMB setup");
             Console.WriteLine("===================");
             Console.WriteLine();
+
+            if (_qrOnly)
+            {
+                ShowQrFromAccessFile();
+                return 0;
+            }
 
             if (!_dryRun && !IsAdministrator())
             {
@@ -115,6 +130,7 @@ namespace QRScannerSetup
             string account = Environment.MachineName + "\\" + UserName;
 
             Console.WriteLine("User:  " + account);
+            Console.WriteLine("Name:  " + Environment.MachineName);
             Console.WriteLine("Share: " + ShareName);
             Console.WriteLine("Path:  " + Root);
             Console.WriteLine();
@@ -133,6 +149,7 @@ namespace QRScannerSetup
             }
 
             EnsureSmb2();
+            EnsureNetBios();
 
             Run("sc", "config lanmanserver start= auto", "server service");
             Run("net", "start lanmanserver", "start server", ignoreError: true);
@@ -160,6 +177,28 @@ namespace QRScannerSetup
                 "dir=in action=allow protocol=TCP localport=445 remoteip=localsubnet",
                 "firewall rule");
 
+            Run(
+                "netsh",
+                "advfirewall firewall delete rule name=\"QRScanner NBNS 137\"",
+                "delete old NBNS rule",
+                ignoreError: true);
+            Run(
+                "netsh",
+                "advfirewall firewall add rule name=\"QRScanner NBNS 137\" " +
+                "dir=in action=allow protocol=UDP localport=137 remoteip=localsubnet",
+                "NBNS firewall rule");
+
+            Run(
+                "netsh",
+                "advfirewall firewall delete rule name=\"QRScanner LLMNR 5355\"",
+                "delete old LLMNR rule",
+                ignoreError: true);
+            Run(
+                "netsh",
+                "advfirewall firewall add rule name=\"QRScanner LLMNR 5355\" " +
+                "dir=in action=allow protocol=UDP localport=5355 remoteip=localsubnet",
+                "LLMNR firewall rule");
+
             ReportPort445();
 
             string ip = GetPrimaryIPv4();
@@ -168,13 +207,14 @@ namespace QRScannerSetup
                 "QRScanner SMB settings",
                 "OS=" + _osName + " (" + _osVersion + ")",
                 "SMB2=" + (_needsSmb2Registry ? "enabled" : "native"),
-                "Server=" + ip,
+                "Server=" + Environment.MachineName,
+                "IP=" + ip,
                 "Share=" + ShareName,
                 "User=" + account,
                 "Password=" + password,
-                "Orders=\\\\" + ip + "\\" + ShareName + "\\Заказы",
-                "QR=\\\\" + ip + "\\" + ShareName + "\\QR-коды",
-                "Updates=\\\\" + ip + "\\" + ShareName + "\\Обновления",
+                "Orders=\\\\" + Environment.MachineName + "\\" + ShareName + "\\Заказы",
+                "QR=\\\\" + Environment.MachineName + "\\" + ShareName + "\\QR-коды",
+                "Updates=\\\\" + Environment.MachineName + "\\" + ShareName + "\\Обновления",
                 "",
                 "Enter these values in QRScanner -> Settings -> Computer (SMB)."
             };
@@ -195,7 +235,7 @@ namespace QRScannerSetup
                 Console.WriteLine();
                 Console.WriteLine("Access file: " + AccessFile);
                 Console.WriteLine();
-                Console.WriteLine("Server:   " + ip);
+                Console.WriteLine("Server:   " + Environment.MachineName + " (" + ip + ")");
                 Console.WriteLine("Share:    " + ShareName);
                 Console.WriteLine("User:     " + account);
                 Console.WriteLine("Password: " + password);
@@ -208,6 +248,15 @@ namespace QRScannerSetup
                 Console.WriteLine("UNC path: \\\\" + ip + "\\" + ShareName);
                 Console.WriteLine();
                 Console.WriteLine("Done.");
+
+                if (!_noQr)
+                {
+                    ShowSettingsQr(
+                        Environment.MachineName,
+                        ShareName,
+                        account,
+                        password);
+                }
 
                 if (!_noNotepad)
                 {
@@ -320,6 +369,217 @@ namespace QRScannerSetup
             catch (Exception ex)
             {
                 Console.WriteLine("[SMB2] error: " + ex.Message);
+            }
+        }
+
+        private static void EnsureNetBios()
+        {
+            const string path = @"SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces";
+
+            try
+            {
+                RegistryKey baseKey = Environment.Is64BitOperatingSystem
+                    ? RegistryKey.OpenBaseKey(
+                        RegistryHive.LocalMachine,
+                        RegistryView.Registry64)
+                    : Registry.LocalMachine;
+
+                using (RegistryKey interfaces =
+                    baseKey.OpenSubKey(path, writable: !_dryRun))
+                {
+                    if (interfaces == null)
+                    {
+                        Console.WriteLine("[NetBIOS] interfaces key not found");
+                        return;
+                    }
+
+                    foreach (string name in interfaces.GetSubKeyNames())
+                    {
+                        if (!name.StartsWith(
+                            "Tcpip_",
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+
+                        using (RegistryKey iface =
+                            interfaces.OpenSubKey(name, writable: !_dryRun))
+                        {
+                            if (iface == null)
+                            {
+                                continue;
+                            }
+
+                            object value = iface.GetValue("NetbiosOptions");
+                            int options = value == null
+                                ? 0
+                                : Convert.ToInt32(value);
+
+                            if (options == 1)
+                            {
+                                continue;
+                            }
+
+                            if (_dryRun)
+                            {
+                                Console.WriteLine(
+                                    "[NetBIOS] would enable for " + name);
+                                continue;
+                            }
+
+                            iface.SetValue(
+                                "NetbiosOptions",
+                                1,
+                                RegistryValueKind.DWord);
+                            Console.WriteLine("[NetBIOS] enabled for " + name);
+                            _netbiosChanged = true;
+                        }
+                    }
+                }
+
+                if (_netbiosChanged)
+                {
+                    Console.WriteLine(
+                        "[NetBIOS] reboot Windows to apply the change");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[NetBIOS] error: " + ex.Message);
+            }
+        }
+
+        private static void ShowQrFromAccessFile()
+        {
+            if (!File.Exists(AccessFile))
+            {
+                Console.WriteLine("Нет файла " + AccessFile);
+                return;
+            }
+
+            string server = null;
+            string share = null;
+            string user = null;
+            string password = null;
+
+            foreach (string line in File.ReadAllLines(AccessFile))
+            {
+                string trimmed = line.Trim();
+                if (trimmed.StartsWith(
+                    "Server=",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    server = trimmed.Substring(7).Trim();
+                }
+                else if (trimmed.StartsWith(
+                    "Share=",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    share = trimmed.Substring(6).Trim();
+                }
+                else if (trimmed.StartsWith(
+                    "User=",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    user = trimmed.Substring(5).Trim();
+                }
+                else if (trimmed.StartsWith(
+                    "Password=",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    password = trimmed.Substring(9).Trim();
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(server) ||
+                string.IsNullOrWhiteSpace(share) ||
+                string.IsNullOrWhiteSpace(user) ||
+                string.IsNullOrWhiteSpace(password))
+            {
+                Console.WriteLine(
+                    "В файле нет Server, Share, User и Password.");
+                return;
+            }
+
+            ShowSettingsQr(server, share, user, password);
+        }
+
+        private static void ShowSettingsQr(
+            string server,
+            string share,
+            string user,
+            string password)
+        {
+            try
+            {
+                string raw = server + "|" + share + "|" + user + "|" + password;
+                string payload = "QRSCANNER:SMB:" +
+                    Convert.ToBase64String(
+                        Encoding.UTF8.GetBytes(raw));
+
+                using (QRCodeGenerator generator = new QRCodeGenerator())
+                using (QRCodeData data = generator.CreateQrCode(
+                    payload,
+                    QRCodeGenerator.ECCLevel.M))
+                {
+                    PngByteQRCode qr = new PngByteQRCode(data);
+                    byte[] png = qr.GetGraphic(12);
+
+                    using (MemoryStream stream = new MemoryStream(png))
+                    using (Image image = Image.FromStream(stream))
+                    using (Bitmap bitmap = new Bitmap(image))
+                    using (Form form = new Form())
+                    {
+                        form.Text = "QRScanner — настройки SMB";
+                        form.StartPosition = FormStartPosition.CenterScreen;
+                        form.Width = 640;
+                        form.Height = 780;
+                        form.TopMost = true;
+                        form.MinimizeBox = false;
+                        form.MaximizeBox = false;
+
+                        Label label = new Label();
+                        label.Text =
+                            "На ТСД: Настройки → Компьютер → " +
+                            "Сканировать QR настроек.\n" +
+                            "Наведите сканер на этот QR-код.";
+                        label.Dock = DockStyle.Top;
+                        label.Height = 80;
+                        label.TextAlign = ContentAlignment.MiddleCenter;
+                        label.Font = new Font("Segoe UI", 11f);
+
+                        PictureBox picture = new PictureBox();
+                        picture.Image = bitmap;
+                        picture.SizeMode = PictureBoxSizeMode.Zoom;
+                        picture.Dock = DockStyle.Fill;
+
+                        Button button = new Button();
+                        button.Text = "Готово";
+                        button.Dock = DockStyle.Bottom;
+                        button.Height = 52;
+                        button.Font = new Font("Segoe UI", 11f);
+                        button.Click += delegate { form.Close(); };
+
+                        form.Controls.Add(picture);
+                        form.Controls.Add(label);
+                        form.Controls.Add(button);
+
+                        try
+                        {
+                            Application.EnableVisualStyles();
+                        }
+                        catch
+                        {
+                            // Visual styles are optional.
+                        }
+
+                        form.ShowDialog();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("QR: " + ex.Message);
             }
         }
 

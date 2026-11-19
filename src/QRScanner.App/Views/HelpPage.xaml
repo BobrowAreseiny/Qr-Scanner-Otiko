@@ -162,7 +162,7 @@
 
                         <Label Text="Компьютер (SMB)"
                                Style="{StaticResource ListNameLabel}" />
-                        <Label Text="Сервер, общая папка, пользователь и пароль. Для быстрой настройки положите QRScanner-access.txt в Download или в папку приложения и нажмите «Импорт из файла»."
+                        <Label Text="Сервер — имя компьютера (например, BEAVER-JR) или IP. Быстрая настройка: запустите QRScannerSetup.exe на компьютере и нажмите на ТСД «Сканировать QR настроек». Запасной вариант — импорт QRScanner-access.txt из Download или папки приложения."
                                Style="{StaticResource BodyLabel}" />
                     </VerticalStackLayout>
                 </Border>

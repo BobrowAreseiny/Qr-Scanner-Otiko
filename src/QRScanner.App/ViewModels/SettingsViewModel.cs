@@ -71,6 +71,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         SaveSmbCommand = new AsyncRelayCommand(SaveSmbAsync);
         TestSmbCommand = new AsyncRelayCommand(TestSmbAsync);
         ImportSmbCommand = new AsyncRelayCommand(ImportSmbAsync);
+        ScanSettingsQrCommand = new AsyncRelayCommand(ShowSettingsQrHintAsync);
         CheckUpdateCommand = new AsyncRelayCommand(CheckUpdateAsync);
     }
 
@@ -224,6 +225,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public IAsyncRelayCommand ImportSmbCommand { get; }
 
+    public IAsyncRelayCommand ScanSettingsQrCommand { get; }
+
     public IAsyncRelayCommand CheckUpdateCommand { get; }
 
     public async Task LoadAsync()
@@ -302,6 +305,55 @@ public sealed partial class SettingsViewModel : ObservableObject
         var key = string.IsNullOrWhiteSpace(section) ? "datamark" : section;
         await _navigation.GoToAsync(
             $"{nameof(SettingsSectionPage)}?section={Uri.EscapeDataString(key)}");
+    }
+
+    private Task ShowSettingsQrHintAsync()
+    {
+        return _dialogs.ShowAlertAsync(
+            "Настройка SMB",
+            "Наведите сканер на QR-код, показанный программой QRScannerSetup.exe на компьютере.",
+            "OK");
+    }
+
+    public async Task HandleSettingsScanAsync(string? data)
+    {
+        if (!ShowSmb || string.IsNullOrWhiteSpace(data))
+        {
+            return;
+        }
+
+        const string prefix = "QRSCANNER:SMB:";
+        if (!data.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        try
+        {
+            var raw = Encoding.UTF8.GetString(
+                Convert.FromBase64String(data[prefix.Length..].Trim()));
+            var parts = raw.Split('|');
+            if (parts.Length != 4)
+            {
+                SmbStatusMessage = "Некорректный QR настроек SMB.";
+                return;
+            }
+
+            SmbServer = parts[0].Trim();
+            SmbShare = parts[1].Trim();
+            SmbLogin = parts[2].Trim();
+            SmbPassword = parts[3];
+            IsSmbPasswordVisible = false;
+
+            await _smbSettings.SaveAsync(BuildSmbSettings());
+            SmbStatusMessage =
+                "Настройки SMB получены из QR. Проверка подключения...";
+            await TestSmbAsync();
+        }
+        catch (Exception ex)
+        {
+            SmbStatusMessage = $"Ошибка QR настроек: {ex.Message}";
+        }
     }
 
     private async Task SaveAsync()
