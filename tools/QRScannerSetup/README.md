@@ -77,7 +77,12 @@ C:\QRScanner-access.txt
 
 Данные приложения сохраняются. `versionCode` должен быть больше установленного.
 
-## Если установщик завис на net user
+## Если не удаётся создать пользователя
+
+По умолчанию установщик создаёт локального пользователя через API Windows
+(`System.DirectoryServices.AccountManagement`), а не через `net user`.
+
+Если появилась ошибка создания пользователя:
 
 1. Закройте установщик.
 2. Создайте пользователя вручную от администратора:
@@ -119,4 +124,4 @@ QRScannerSetup.exe --skip-user
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-Требуется .NET Framework 4.0 и `QRCoder.dll` (net40) в папке сборки.
+Требуется .NET Framework 4.0 (включая `System.DirectoryServices.AccountManagement`) и `QRCoder.dll` (net40) в папке сборки.

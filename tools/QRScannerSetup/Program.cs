@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.DirectoryServices.AccountManagement;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -142,17 +143,14 @@ namespace QRScannerSetup
             {
                 Console.WriteLine("[user] skipped (--skip-user)");
             }
-            else if (UserExists())
+            else if (_dryRun)
             {
-                Run("net", "user " + UserName + " \"" + password + "\"", "set password");
-                Run("net", "user " + UserName + " /expires:never /passwordchg:no", "user flags");
+                Console.WriteLine(
+                    "[user] would create or update local user " + UserName);
             }
             else
             {
-                Run(
-                    "net",
-                    "user " + UserName + " \"" + password + "\" /add /expires:never /passwordchg:no",
-                    "create user");
+                EnsureUser(password);
             }
 
             EnsureSmb2();
@@ -376,6 +374,39 @@ namespace QRScannerSetup
             catch (Exception ex)
             {
                 Console.WriteLine("[SMB2] error: " + ex.Message);
+            }
+        }
+
+        private static void EnsureUser(string password)
+        {
+            using (PrincipalContext context =
+                new PrincipalContext(ContextType.Machine))
+            {
+                UserPrincipal user = UserPrincipal.FindByIdentity(
+                    context,
+                    UserName);
+
+                if (user == null)
+                {
+                    user = new UserPrincipal(context);
+                    user.Name = UserName;
+                    user.DisplayName = "QRScanner SMB";
+                    user.SetPassword(password);
+                    user.PasswordNeverExpires = true;
+                    user.UserCannotChangePassword = true;
+                    user.Save();
+                    Console.WriteLine("[user] created via local accounts API");
+                }
+                else
+                {
+                    user.SetPassword(password);
+                    user.PasswordNeverExpires = true;
+                    user.UserCannotChangePassword = true;
+                    user.Save();
+                    Console.WriteLine("[user] updated via local accounts API");
+                }
+
+                user.Dispose();
             }
         }
 
