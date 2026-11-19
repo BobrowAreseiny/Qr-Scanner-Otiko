@@ -29,7 +29,9 @@ namespace QRScannerSetup
         private static bool _noNotepad;
         private static bool _noQr;
         private static bool _qrOnly;
+        private static bool _skipUser;
         private static bool _simulateWin7;
+        private const int CommandTimeoutMilliseconds = 30000;
         private static string _osName = string.Empty;
         private static Version _osVersion = new Version(0, 0);
         private static bool _needsSmb2Registry;
@@ -45,6 +47,7 @@ namespace QRScannerSetup
             _noNotepad = HasArg(args, "no-notepad");
             _noQr = HasArg(args, "no-qr");
             _qrOnly = HasArg(args, "qr-only");
+            _skipUser = HasArg(args, "skip-user");
             _simulateWin7 = HasArg(args, "simulate-win7");
 
             Console.Title = "QRScanner Setup";
@@ -135,7 +138,11 @@ namespace QRScannerSetup
             Console.WriteLine("Path:  " + Root);
             Console.WriteLine();
 
-            if (UserExists())
+            if (_skipUser)
+            {
+                Console.WriteLine("[user] skipped (--skip-user)");
+            }
+            else if (UserExists())
             {
                 Run("net", "user " + UserName + " \"" + password + "\"", "set password");
                 Run("net", "user " + UserName + " /expires:never /passwordchg:no", "user flags");
@@ -728,9 +735,43 @@ namespace QRScannerSetup
 
             using (Process process = Process.Start(startInfo))
             {
+                bool exited = process.WaitForExit(
+                    CommandTimeoutMilliseconds);
                 string output = process.StandardOutput.ReadToEnd();
                 string error = process.StandardError.ReadToEnd();
-                process.WaitForExit();
+
+                if (!exited)
+                {
+                    try
+                    {
+                        process.Kill();
+                    }
+                    catch
+                    {
+                        // The process may have just exited.
+                    }
+
+                    try
+                    {
+                        process.WaitForExit();
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors.
+                    }
+
+                    Console.WriteLine(
+                        "[" + title + "] TIMEOUT after " +
+                        (CommandTimeoutMilliseconds / 1000) + " seconds");
+
+                    if (ignoreError)
+                    {
+                        return new CommandResult(-1, output, error);
+                    }
+
+                    throw new InvalidOperationException(
+                        title + " timed out");
+                }
 
                 if (!capture)
                 {
