@@ -38,6 +38,12 @@ namespace QRScannerSetup
         private static bool _qrOnly;
         private static bool _skipUser;
         private static bool _simulateWin7;
+        private static bool _install;
+        private static bool _uninstall;
+        private static bool _yes;
+        private static bool _keepData;
+        private static bool _menu;
+        private static bool _help;
         private const int CommandTimeoutMilliseconds = 30000;
         private static string _osName = string.Empty;
         private static Version _osVersion = new Version(0, 0);
@@ -58,6 +64,12 @@ namespace QRScannerSetup
             _qrOnly = HasArg(args, "qr-only");
             _skipUser = HasArg(args, "skip-user");
             _simulateWin7 = HasArg(args, "simulate-win7");
+            _install = HasArg(args, "install");
+            _uninstall = HasArg(args, "uninstall");
+            _yes = HasArg(args, "yes");
+            _keepData = HasArg(args, "keep-data");
+            _menu = HasArg(args, "menu");
+            _help = HasArg(args, "help") || HasArg(args, "h");
 
             string requestedUser = GetArgValue(args, "user");
             if (!string.IsNullOrWhiteSpace(requestedUser))
@@ -70,9 +82,36 @@ namespace QRScannerSetup
             _simulateTakenUser = GetArgValue(args, "simulate-taken");
 
             Console.Title = "QRScanner Setup";
-            Console.WriteLine("QRScanner SMB setup");
-            Console.WriteLine("===================");
-            Console.WriteLine();
+
+            if (_help)
+            {
+                ShowHelp();
+                return 0;
+            }
+
+            bool noAction = !_install && !_uninstall && !_qrOnly;
+            if (noAction &&
+                (_menu || (args.Length == 0 && !Console.IsInputRedirected)))
+            {
+                int choice = ShowMenu();
+                if (choice == 0)
+                {
+                    return 0;
+                }
+
+                if (choice == 1)
+                {
+                    _install = true;
+                }
+                else if (choice == 2)
+                {
+                    _uninstall = true;
+                }
+                else
+                {
+                    _qrOnly = true;
+                }
+            }
 
             if (_qrOnly)
             {
@@ -80,12 +119,18 @@ namespace QRScannerSetup
                 return 0;
             }
 
+            if (_install && _uninstall)
+            {
+                Console.WriteLine("Choose either --install or --uninstall.");
+                return 1;
+            }
+
             if (!_dryRun && !IsAdministrator())
             {
                 try
                 {
                     string executable = Process.GetCurrentProcess().MainModule.FileName;
-                    string arguments = string.Join(" ", args.Select(Quote));
+                    string arguments = BuildElevatedArguments();
                     Process.Start(new ProcessStartInfo
                     {
                         FileName = executable,
@@ -103,6 +148,27 @@ namespace QRScannerSetup
                 return 0;
             }
 
+            if (_uninstall)
+            {
+                try
+                {
+                    RunUninstall();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("ERROR: " + ex.Message);
+                    Pause();
+                    return 1;
+                }
+
+                Pause();
+                return 0;
+            }
+
+            Console.WriteLine("QRScanner SMB setup");
+            Console.WriteLine("===================");
+            Console.WriteLine();
+
             try
             {
                 Run();
@@ -116,6 +182,121 @@ namespace QRScannerSetup
 
             Pause();
             return 0;
+        }
+
+        private static void ShowHelp()
+        {
+            Console.WriteLine("QRScanner Setup");
+            Console.WriteLine("===============");
+            Console.WriteLine();
+            Console.WriteLine("Без параметров      показать меню");
+            Console.WriteLine("--install           установить или обновить");
+            Console.WriteLine("--uninstall         удалить всё (спросит YES)");
+            Console.WriteLine("--uninstall --yes   удалить без вопросов");
+            Console.WriteLine("--keep-data         при удалении сохранить C:\\QRScanner");
+            Console.WriteLine("--qr-only           показать QR настроек");
+            Console.WriteLine("--user NAME         задать имя служебного пользователя");
+            Console.WriteLine("--skip-user         не создавать пользователя");
+            Console.WriteLine("--no-qr             не показывать QR");
+            Console.WriteLine("--no-pause          не ждать Enter");
+            Console.WriteLine("--dry-run           только показать действия");
+            Console.WriteLine("--help              эта справка");
+        }
+
+        private static int ShowMenu()
+        {
+            while (true)
+            {
+                Console.WriteLine("QRScanner Setup");
+                Console.WriteLine("===============");
+                Console.WriteLine("1. Установить или обновить");
+                Console.WriteLine("2. Удалить всё");
+                Console.WriteLine("3. Показать QR настроек");
+                Console.WriteLine("0. Выход");
+                Console.WriteLine();
+                Console.Write("Выберите пункт [1]: ");
+
+                string value = Console.ReadLine();
+                if (value == null)
+                {
+                    return 0;
+                }
+
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    return 1;
+                }
+
+                switch (value.Trim())
+                {
+                    case "0":
+                        return 0;
+                    case "1":
+                        return 1;
+                    case "2":
+                        return 2;
+                    case "3":
+                        return 3;
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("Введите 0, 1, 2 или 3.");
+                Console.WriteLine();
+            }
+        }
+
+        private static string BuildElevatedArguments()
+        {
+            List<string> parts = new List<string>();
+            parts.Add(_uninstall ? "--uninstall" : "--install");
+
+            if (_uninstall)
+            {
+                if (_yes)
+                {
+                    parts.Add("--yes");
+                }
+
+                if (_keepData)
+                {
+                    parts.Add("--keep-data");
+                }
+            }
+            else
+            {
+                if (_skipUser)
+                {
+                    parts.Add("--skip-user");
+                }
+
+                if (_noQr)
+                {
+                    parts.Add("--no-qr");
+                }
+
+                if (_noNotepad)
+                {
+                    parts.Add("--no-notepad");
+                }
+
+                if (_simulateWin7)
+                {
+                    parts.Add("--simulate-win7");
+                }
+            }
+
+            if (_userNameExplicit)
+            {
+                parts.Add("--user");
+                parts.Add(Quote(_userName));
+            }
+
+            if (_noPause)
+            {
+                parts.Add("--no-pause");
+            }
+
+            return string.Join(" ", parts.ToArray());
         }
 
         private static void RegisterEmbeddedAssemblies()
@@ -354,6 +535,432 @@ namespace QRScannerSetup
                     {
                         // Notepad is optional.
                     }
+                }
+            }
+        }
+
+        private static void RunUninstall()
+        {
+            Console.WriteLine("QRScanner uninstall");
+            Console.WriteLine("===================");
+            Console.WriteLine();
+
+            List<string> serviceUsers = FindServiceUsers();
+            ShowUninstallPlan(serviceUsers);
+
+            if (!_dryRun && !_yes)
+            {
+                Console.Write("Для продолжения введите YES: ");
+                string answer = Console.ReadLine();
+                if (!string.Equals(
+                    answer,
+                    "YES",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("Отменено.");
+                    return;
+                }
+            }
+
+            Console.WriteLine();
+
+            if (_dryRun)
+            {
+                Console.WriteLine(
+                    "[share] would delete \\\\" + Environment.MachineName +
+                    "\\" + ShareName);
+            }
+            else if (IsOurShare())
+            {
+                Run(
+                    "net",
+                    "share " + ShareName + " /delete",
+                    "delete share",
+                    ignoreError: true);
+            }
+            else
+            {
+                Console.WriteLine(
+                    "[share] " + ShareName + " not found or not ours");
+            }
+
+            if (_keepData && serviceUsers.Count > 0 && Directory.Exists(Root))
+            {
+                foreach (string user in serviceUsers)
+                {
+                    Run(
+                        "icacls",
+                        Root + " /remove:g " + user + " /T /C",
+                        "remove " + user + " from NTFS permissions",
+                        ignoreError: true);
+                }
+            }
+
+            foreach (string user in serviceUsers)
+            {
+                DeleteServiceUser(user);
+            }
+
+            Run(
+                "netsh",
+                "advfirewall firewall delete rule name=\"QRScanner SMB 445\"",
+                "delete SMB firewall rule",
+                ignoreError: true);
+            Run(
+                "netsh",
+                "advfirewall firewall delete rule name=\"QRScanner NBNS 137\"",
+                "delete NBNS firewall rule",
+                ignoreError: true);
+            Run(
+                "netsh",
+                "advfirewall firewall delete rule name=\"QRScanner LLMNR 5355\"",
+                "delete LLMNR firewall rule",
+                ignoreError: true);
+
+            if (File.Exists(AccessFile))
+            {
+                if (_dryRun)
+                {
+                    Console.WriteLine("[file] would delete " + AccessFile);
+                }
+                else
+                {
+                    File.Delete(AccessFile);
+                    Console.WriteLine("[file] deleted " + AccessFile);
+                }
+            }
+            else
+            {
+                Console.WriteLine("[file] " + AccessFile + " not found");
+            }
+
+            string executable = Process.GetCurrentProcess().MainModule.FileName;
+            bool exeInsideRoot = executable.StartsWith(
+                Root + "\\",
+                StringComparison.OrdinalIgnoreCase);
+
+            if (_keepData)
+            {
+                Console.WriteLine("[folder] kept " + Root + " (--keep-data)");
+            }
+            else if (!Directory.Exists(Root))
+            {
+                Console.WriteLine("[folder] " + Root + " not found");
+            }
+            else if (exeInsideRoot)
+            {
+                Console.WriteLine(
+                    "[folder] setup is running from " + Root +
+                    "; folder kept. Move the EXE and run --uninstall again.");
+            }
+            else if ((File.GetAttributes(Root) & FileAttributes.ReparsePoint) != 0)
+            {
+                Console.WriteLine(
+                    "[folder] " + Root +
+                    " is a reparse point; remove it manually");
+            }
+            else if (_dryRun)
+            {
+                Console.WriteLine("[folder] would delete " + Root);
+            }
+            else
+            {
+                try
+                {
+                    DeleteDirectoryWithRetry(Root);
+                    Console.WriteLine("[folder] deleted " + Root);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(
+                        "[folder] could not delete " + Root + ": " +
+                        ex.Message);
+                }
+            }
+
+            Console.WriteLine();
+            Console.WriteLine(
+                "[info] SMB2/NetBIOS are shared Windows settings and were not changed.");
+            Console.WriteLine("Uninstall finished.");
+        }
+
+        private static void ShowUninstallPlan(List<string> serviceUsers)
+        {
+            Console.WriteLine("Будет удалено:");
+            Console.WriteLine(
+                "  - общая папка \\\\" + Environment.MachineName +
+                "\\" + ShareName);
+
+            if (serviceUsers.Count == 0)
+            {
+                Console.WriteLine("  - служебный пользователь: не найден");
+            }
+            else
+            {
+                Console.WriteLine(
+                    "  - служебный пользователь: " +
+                    string.Join(", ", serviceUsers.ToArray()));
+            }
+
+            Console.WriteLine(
+                "  - правила брандмауэра QRScanner SMB 445, NBNS 137, LLMNR 5355");
+            Console.WriteLine("  - файл " + AccessFile);
+
+            if (_keepData)
+            {
+                Console.WriteLine(
+                    "  - папка " + Root + " останется (--keep-data)");
+            }
+            else
+            {
+                Console.WriteLine(
+                    "  - папка " + Root +
+                    " со всеми заказами и QR-кодами");
+            }
+
+            Console.WriteLine();
+        }
+
+        private static List<string> FindServiceUsers()
+        {
+            List<string> result = new List<string>();
+            List<string> candidates = new List<string>();
+
+            string fromFile = ReadAccessUserName();
+            if (!string.IsNullOrWhiteSpace(fromFile))
+            {
+                candidates.Add(fromFile);
+            }
+
+            if (_userNameExplicit)
+            {
+                candidates.Add(_userName);
+            }
+
+            for (int index = 1; index <= 99; index++)
+            {
+                candidates.Add(index == 1 ? UserName : UserName + index);
+            }
+
+            try
+            {
+                using (PrincipalContext context =
+                    new PrincipalContext(ContextType.Machine))
+                {
+                    foreach (string candidate in candidates)
+                    {
+                        if (string.IsNullOrWhiteSpace(candidate) ||
+                            result.Any(existing => string.Equals(
+                                existing,
+                                candidate,
+                                StringComparison.OrdinalIgnoreCase)))
+                        {
+                            continue;
+                        }
+
+                        if (string.Equals(
+                            candidate,
+                            Environment.UserName,
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            Console.WriteLine(
+                                "[user] " + candidate +
+                                " is the current Windows user; " +
+                                "it will not be deleted");
+                            continue;
+                        }
+
+                        UserPrincipal user =
+                            UserPrincipal.FindByIdentity(context, candidate);
+                        if (user == null)
+                        {
+                            continue;
+                        }
+
+                        bool ours = IsServiceAccount(user);
+                        user.Dispose();
+
+                        if (ours)
+                        {
+                            result.Add(candidate);
+                        }
+                        else if (string.Equals(
+                                candidate,
+                                fromFile,
+                                StringComparison.OrdinalIgnoreCase) ||
+                            (_userNameExplicit && string.Equals(
+                                candidate,
+                                _userName,
+                                StringComparison.OrdinalIgnoreCase)))
+                        {
+                            Console.WriteLine(
+                                "[user] " + candidate +
+                                " is not a QRScanner service account; " +
+                                "it will not be deleted");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "[user] could not list service accounts: " +
+                    ex.Message);
+            }
+
+            return result;
+        }
+
+        private static string ReadAccessUserName()
+        {
+            string value = ReadAccessValue("User");
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            int slash = value.IndexOf('\\');
+            if (slash >= 0)
+            {
+                value = value.Substring(slash + 1);
+            }
+
+            return value.Trim();
+        }
+
+        private static string ReadAccessValue(string key)
+        {
+            if (!File.Exists(AccessFile))
+            {
+                return null;
+            }
+
+            try
+            {
+                foreach (string line in File.ReadAllLines(AccessFile))
+                {
+                    string trimmed = line.Trim();
+                    if (trimmed.StartsWith(
+                        key + "=",
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        return trimmed.Substring(key.Length + 1).Trim();
+                    }
+                }
+            }
+            catch
+            {
+                // The access file is optional for uninstall.
+            }
+
+            return null;
+        }
+
+        private static void DeleteServiceUser(string name)
+        {
+            if (string.Equals(
+                name,
+                Environment.UserName,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine(
+                    "[user] " + name +
+                    " is the current Windows user; skipped");
+                return;
+            }
+
+            try
+            {
+                using (PrincipalContext context =
+                    new PrincipalContext(ContextType.Machine))
+                {
+                    UserPrincipal user =
+                        UserPrincipal.FindByIdentity(context, name);
+
+                    if (user == null)
+                    {
+                        Console.WriteLine("[user] " + name + " not found");
+                        return;
+                    }
+
+                    if (!IsServiceAccount(user))
+                    {
+                        Console.WriteLine(
+                            "[user] " + name +
+                            " is not a QRScanner service account; skipped");
+                        user.Dispose();
+                        return;
+                    }
+
+                    if (_dryRun)
+                    {
+                        Console.WriteLine("[user] would delete " + name);
+                        user.Dispose();
+                        return;
+                    }
+
+                    user.Delete();
+                    user.Dispose();
+                    Console.WriteLine("[user] deleted " + name);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "[user] could not delete " + name + ": " +
+                    ex.Message);
+            }
+        }
+
+        private static bool IsOurShare()
+        {
+            CommandResult result = Run(
+                "net",
+                "share " + ShareName,
+                "check share",
+                ignoreError: true,
+                capture: true);
+
+            string output = result.Output ?? string.Empty;
+            int index = output.IndexOf(
+                Root,
+                StringComparison.OrdinalIgnoreCase);
+
+            while (index >= 0)
+            {
+                int end = index + Root.Length;
+                if (end >= output.Length ||
+                    char.IsWhiteSpace(output[end]))
+                {
+                    return true;
+                }
+
+                index = output.IndexOf(
+                    Root,
+                    index + 1,
+                    StringComparison.OrdinalIgnoreCase);
+            }
+
+            return false;
+        }
+
+        private static void DeleteDirectoryWithRetry(string path)
+        {
+            for (int attempt = 1; attempt <= 3; attempt++)
+            {
+                try
+                {
+                    Directory.Delete(path, true);
+                    return;
+                }
+                catch (Exception)
+                {
+                    if (attempt == 3)
+                    {
+                        throw;
+                    }
+
+                    System.Threading.Thread.Sleep(1000);
                 }
             }
         }
